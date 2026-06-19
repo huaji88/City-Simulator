@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城市地铁购票系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f0f8ff, #e6f7ff);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .metro-ticket-system {
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 105, 148, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .system-header {
+            background: linear-gradient(to right, #1e88e5, #0d47a1);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .system-header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            transform: rotate(30deg);
+        }
+        
+        .system-header h1 {
+            color: white;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            position: relative;
+            text-shadow: 极0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .system-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            margin-top: 8px;
+            position: relative;
+        }
+        
+        .system-body {
+            padding: 32px;
+        }
+        
+        .station-section {
+            background: #f8fbff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 20px rgba(30, 136, 229, 0.1);
+            border: 1px solid #e3f2fd;
+        }
+        
+        .section-title {
+            color: #1e88e5;
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .station-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+        
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(to bottom, #1e88e5, #0d47a1);
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(30, 136, 229, 0.3);
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(30, 136, 229, 0.4);
+            background: linear-gradient(to bottom, #42a5f5, #1e88e5);
+        }
+        
+        .station-display {
+            width: 170px;
+            height: 100px;
+            background: white;
+            border: 2px solid #bbdefb;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 46px;
+            font-weight: 700;
+            color: #1e88e5;
+            box-shadow: inset 0 0 15px rgba(30, 136, 229, 0.1);
+        }
+        
+        .station-label {
+            font-size: 18px;
+            color: #64b5f6;
+            margin-top: 8px;
+        }
+        
+        .price-section {
+            background: #f8fbff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 20px rgba(30, 136, 229, 0.1);
+            border: 1px solid #e3f2fd;
+            text-align: center;
+        }
+        
+        .price-display {
+            font-size: 72px; /* 增大价格显示字体 */
+            font-weight: 800;
+            color: #1e88e5;
+            margin: 20px 0;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .price-display::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #1e88e5, transparent);
+        }
+        
+        .price-unit {
+            font-size: 36px; /* 增大单位字体 */
+            color: #64b5f6;
+            margin-left: 8px;
+        }
+        
+        .price-info {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #64b5f6;
+            line-height: 1.6;
+            background: rgba(30, 136, 229, 0.05);
+            padding: 16px;
+            border-radius: 14px;
+        }
+        
+        .payment-section {
+            background: #f8fbff;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 8px 20px rgba(30, 136, 229, 0.1);
+            border: 1px solid #e3f2fd;
+        }
+        
+        .payment-title {
+            color: #1e88e5;
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .payment-btn {
+            width: 90px;
+            height: 90px;
+            border-radius: 18px;
+            border: 2px solid #bbdefb;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 90px;
+        }
+        
+        .payment-btn i {
+            font-size: 38px;
+            color: #1e88e5;
+            margin-bottom: 12px;
+        }
+        
+        .payment-btn span {
+            font-size: 14px;
+            color: #64b5f6;
+        }
+        
+        .payment-btn.active, .payment-btn:hover {
+            border-color: #1e88e5;
+            background: rgba(30, 136, 229, 0.05);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .payment-btn.active i, .payment-btn:hover i {
+            color: #0d47a1;
+        }
+        
+        .payment-btn.active span, .payment-btn:hover span {
+            color: #0d47a1;
+        }
+        
+        .buy-btn {
+            width: 100%;
+            padding: 24px;
+            border-radius: 18px;
+            border: none;
+            background: linear-gradient(to right, #1e88e5, #0d47a1);
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 25px rgba(30, 136, 229, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .buy-btn::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            transform: rotate(30deg);
+        }
+        
+        .buy-btn:hover {
+            background: linear-gradient(to right, #42a5f5, #1e88e5);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(30, 136, 229, 0.4);
+        }
+        
+        .buy-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* 支付弹窗 */
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s;
+        }
+        
+        .payment-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            transform: translateY(30px);
+            transition: transform 0.5s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .payment-modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-header h2 {
+            color: #1e88e5;
+            font-size: 32px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        
+        .modal-header p {
+            color: #64b5f6;
+            font-size: 18px;
+        }
+        
+        .modal-body {
+            margin-bottom: 30px;
+        }
+        
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e3f2fd;
+        }
+        
+        .modal-label {
+            color: #64b5f6;
+            font-size: 18px;
+        }
+        
+        .modal-value {
+            color: #0d47a1;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .modal-price {
+            font-size: 58px; /* 增大弹窗价格字体 */
+            text-align: center;
+            color: #1e88e5;
+            margin: 30px 0;
+            font-weight: 800;
+            position: relative;
+        }
+        
+        .modal-price::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #1e88e5, transparent);
+        }
+        
+        .modal-price span {
+            font-size: 32px;
+            color: #64b5f6;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .confirm-btn {
+            background: linear-gradient(to right, #1e88e5, #0d47a1);
+            color: white;
+        }
+        
+        .cancel-btn {
+            background: #e3f2fd;
+            color: #64b5f6;
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .success-screen {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .success-screen i {
+            font-size: 100px;
+            color: #4caf50;
+            margin-bottom: 25px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .success-screen h2 {
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: #1e88e5;
+            font-weight: 700;
+        }
+        
+        .metro-footer {
+            padding: 22px;
+            text-align: center;
+            color: #64b5f6;
+            font-size: 14px;
+            border-top: 1px solid #e3f2fd;
+        }
+        
+        @media (max-width: 500px) {
+            .system-header h1 {
+                font-size: 32px;
+            }
+            
+            .station-display {
+                width: 150px;
+                height: 90px;
+                font-size: 40px;
+            }
+            
+            .price-display {
+                font-size: 60px;
+            }
+            
+            .payment-btn {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 地铁购票系统 -->
+    <div class="metro-ticket-system">
+        <div class="system-header">
+            <h1><i class="fas fa-subway"></i> 城市地铁购票系统</h1>
+            <p>智慧出行 · 便捷生活</p>
+        </div>
+        
+        <div class="system-body">
+            <div class="station-section">
+                <div class="section-title">
+                    <i class="fas fa-route"></i> 选择乘坐站数
+                </div>
+                <div class="station-controls">
+                    <button class="control-btn" id="decreaseBtn">-</button>
+                    <div class="station-display">
+                        <span id="stationCount">3</span>
+                        <div class="station-label">站</div>
+                    </div>
+                    <button class="control-btn" id="increaseBtn">+</button>
+                </div>
+            </div>
+            
+            <div class="price-section">
+                <div class="section-title">
+                    <i class="fas fa-tag"></i> 车票价格
+                </div>
+                <div class="price-display">
+                    <span id="ticketPrice">2</span><span class="price-unit">元</span>
+                </div>
+                <div class="price-info">
+                    起步价: 2元 (0-3站) | 最高票价: 13元<br>
+                    每2站增加1元 | 超过25站按25站计算
+                </div>
+            </div>
+            
+            <div class="payment-section">
+                <div class="payment-title">
+                    <i class="fas fa-credit-card"></i> 选择支付方式
+                </div>
+                <div class="payment-methods">
+                    <div class="payment-btn active" data-method="alipay">
+                        <i class="fab fa-alipay"></i>
+                        <span>支付宝</span>
+                    </div>
+                    <div class="payment-btn" data-method="wechat">
+                        <i class="fab fa-weixin"></i>
+                        <span>微信</span>
+                    </div>
+                    <div class="payment-btn" data-method="card">
+                        <i class="fas fa-credit-card"></i>
+                        <span>银行卡</span>
+                    </div>
+                    <div class="payment-btn" data-method="cash">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>现金</span>
+                    </div>
+                </div>
+                
+                <button class="buy-btn" id="buyBtn">
+                    <i class="fas fa-shopping-cart"></i> 确认支付
+                </button>
+            </div>
+        </div>
+        
+        <div class="metro-footer">
+            © 2025 城市地铁系统 | 智慧出行服务
+        </div>
+    </div>
+    
+    <!-- 支付弹窗 -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>确认支付</h2>
+                <p>请确认您的购票信息</p>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-row">
+                    <div class="modal-label">乘坐站数</div>
+                    <div class="modal-value" id="modalStationCount">3站</div>
+                </div>
+                
+                <div class="modal-row">
+                    <div class="modal-label">支付方式</div>
+                    <div class="modal-value" id="modalPaymentMethod">支付宝</div>
+                </div>
+                
+                <div class="modal-price">
+                    <span id="modalTicketPrice">2</span><span class="price-unit">元</span>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="cancelPayment">
+                    取消
+                </button>
+                <button class="modal-btn confirm-btn" id="confirmPayment">
+                    确认支付
+                </button>
+            </div>
+            
+            <!-- 支付成功界面 -->
+            <div class="success-screen" id="successScreen">
+                <i class="fas fa-check-circle"></i>
+                <h2>购票成功</h2>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const stationCountDisplay = document.getElementById('stationCount');
+        const increaseBtn = document.getElementById('increaseBtn');
+        const decreaseBtn = document.getElementById('decreaseBtn');
+        const ticketPrice = document.getElementById('ticketPrice');
+        const buyBtn = document.getElementById('buyBtn');
+        const paymentButtons = document.querySelectorAll('.payment-btn');
+        const paymentModal = document.getElementById('paymentModal');
+        const cancelPaymentBtn = document.getElementById('cancelPayment');
+        const confirmPaymentBtn = document.getElementById('confirmPayment');
+        const modalStationCount = document.getElementById('modalStationCount');
+        const modalPaymentMethod = document.getElementById('modalPaymentMethod');
+        const modalTicketPrice = document.getElementById('modalTicketPrice');
+        const successScreen = document.getElementById('successScreen');
+
+        // 当前站数
+        let stationCount = 3;
+        let selectedPaymentMethod = "支付宝";
+
+        // 票价计算规则（每2站增加1元，最高13元）
+        function calculatePrice(stations) {
+            // 超过25站按25站计算
+            const effectiveStations = Math.min(stations, 25);
+            
+            // 0-3站：2元
+            if (effectiveStations <= 3) return 2;
+            
+            // 4-5站：3元
+            if (effectiveStations <= 5) return 3;
+            
+            // 6-7站：4元
+            if (effectiveStations <= 7) return 4;
+            
+            // 8-9站：5元
+            if (effectiveStations <= 9) return 5;
+            
+            // 10-11站：6元
+            if (effectiveStations <= 11) return 6;
+            
+            // 12-13站：7元
+            if (effectiveStations <= 13) return 7;
+            
+            // 14-15站：8元
+            if (effectiveStations <= 15) return 8;
+            
+            // 16-17站：9元
+            if (effectiveStations <= 17) return 9;
+            
+            // 18-19站：10元
+            if (effectiveStations <= 19) return 10;
+            
+            // 20-21站：11元
+            if (effectiveStations <= 21) return 11;
+            
+            // 22-23站：12元
+            if (effectiveStations <= 23) return 12;
+            
+            // 24-25站：13元
+            return 13;
+        }
+
+        // 更新票价显示
+        function updatePrice() {
+            const price = calculatePrice(stationCount);
+            ticketPrice.textContent = price;
+        }
+
+        // 初始更新
+        updatePrice();
+
+        // 增加站数
+        increaseBtn.addEventListener('click', () => {
+            if (stationCount < 30) {
+                stationCount++;
+                stationCountDisplay.textContent = stationCount;
+                updatePrice();
+            }
+        });
+
+        // 减少站数
+        decreaseBtn.addEventListener('click', () => {
+            if (stationCount > 1) {
+                stationCount--;
+                stationCountDisplay.textContent = stationCount;
+                updatePrice();
+            }
+        });
+
+        // 支付方式选择
+        paymentButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.payment-btn.active').classList.remove('active');
+                btn.classList.add('active');
+                
+                // 更新选择的支付方式
+                selectedPaymentMethod = btn.querySelector('span').textContent;
+            });
+        });
+
+        // 购买按钮事件 - 打开支付弹窗
+        buyBtn.addEventListener('click', () => {
+            // 更新弹窗内容
+            const effectiveStations = Math.min(stationCount, 25);
+            modalStationCount.textContent = `${effectiveStations}站`;
+            modalPaymentMethod.textContent = selectedPaymentMethod;
+            modalTicketPrice.textContent = calculatePrice(stationCount);
+            
+            // 隐藏成功界面（如果之前显示过）
+            successScreen.style.display = 'none';
+            
+            // 显示支付弹窗
+            paymentModal.classList.add('active');
+        });
+
+        // 取消支付
+        cancelPaymentBtn.addEventListener('click', () => {
+            paymentModal.classList.remove('active');
+        });
+
+        // 确认支付
+        confirmPaymentBtn.addEventListener('click', () => {
+            // 显示成功界面
+            successScreen.style.display = 'block';
+        });
+        
+        // 点击弹窗外部关闭
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

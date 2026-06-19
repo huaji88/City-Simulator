@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快乐便利店 - 在线购物</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#f97316',
+                        accent: '#f8fafc',
+                        dark: '#1e293b',
+                        light: '#f1f5f9'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .product-card {
+                @apply bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all;
+            }
+            .quantity-btn {
+                @apply w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 transition-all;
+            }
+            .receipt {
+                @apply bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto text-center;
+            }
+            .receipt-header {
+                @apply border-b border-gray-200 pb-4 mb-4;
+            }
+            .receipt-item {
+                @apply flex justify-between py-1;
+            }
+            .receipt-total {
+                @apply font-bold pt-2 border-t border-gray-200 mt-2;
+            }
+            .category-badge {
+                @apply text-xs font-medium px-2.5 py-0.5 rounded-full;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 头部 -->
+    <header class="bg-dark text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-center md:text-left mb-4 md:mb-0">
+                    <h1 class="text-4xl font-bold mb-2">快乐便利店</h1>
+                    <p class="text-gray-300">便捷购物，满意服务</p>
+                </div>
+                <div class="flex items-center">
+                    <i class="fa fa-phone-square text-2xl mr-2"></i>
+                    <span>客服电话：0577-8888 8888</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 搜索栏 -->
+    <div class="bg-light py-4 shadow-md">
+        <div class="container mx-auto px-4">
+            <div class="relative max-w-3xl mx-auto">
+                <input type="text" id="search-input" placeholder="搜索商品..." 
+                       class="w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <button id="search-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary">
+                    <i class="fa fa-search text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 商品展示区 -->
+            <div class="lg:w-2/3">
+                <h2 class="text-2xl font-bold mb-6 pb-2 border-b-2 border-primary">商品列表</h2>
+                <div id="products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 商品将通过JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 购物车和结算区 -->
+            <div class="lg:w-1/3">
+                <div class="bg-white rounded-lg shadow-lg p-6 sticky top-4">
+                    <h2 class="text-2xl font-bold mb-4 pb-2 border-b border-gray-200">我的购物车</h2>
+                    
+                    <div id="cart-items" class="max-h-64 overflow-y-auto mb-4">
+                        <p class="text-gray-500 text-center py-4">请选择商品</p>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4 mb-4">
+                        <div class="flex justify-between mb-2">
+                            <span>小计：</span>
+                            <span id="subtotal">¥0.00</span>
+                        </div>
+                        <div class="flex justify-between mb-2 text-green-600" id="discount">
+                            <span>优惠：</span>
+                            <span>¥0.00</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl">
+                            <span>总计：</span>
+                            <span id="total">¥0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button id="clear-cart" class="flex-1 btn-secondary">
+                            <i class="fa fa-trash mr-1"></i> 清空购物车
+                        </button>
+                        <button id="pay-btn" class="flex-1 btn-primary" disabled>
+                            <i class="fa fa-credit-card mr-1"></i> 去支付
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 付款模态框 -->
+    <div id="payment-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold">确认支付</h3>
+                <button id="close-payment" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="mb-6 text-center">
+                <p class="text-xl mb-2">您的订单总金额为：</p>
+                <p class="text-3xl font-bold text-primary" id="payment-amount">¥0.00</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="cancel-payment" class="flex-1 btn-secondary">取消</button>
+                <button id="confirm-payment" class="flex-1 btn-primary">确认支付</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支付成功后显示小票 -->
+    <div id="receipt-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="receipt w-full max-w-md relative">
+            <button id="close-receipt" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i class="fa fa-times text-xl"></i>
+            </button>
+            <div class="receipt-header">
+                <h3 class="text-2xl font-bold mb-1">快乐便利店</h3>
+                <p class="text-sm text-gray-500">客服电话：0577-8888 8888</p>
+                <p class="text-sm text-gray-500 mt-1">交易时间：<span id="receipt-time">2025-07-07 12:34:56</span></p>
+            </div>
+            <div id="receipt-items" class="mb-4">
+                <!-- 小票项目将通过JS动态生成 -->
+            </div>
+            <div class="flex justify-between receipt-total">
+                <span>总计：</span>
+                <span id="receipt-total">¥0.00</span>
+            </div>
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">感谢您的惠顾，期待再次为您服务！</p>
+                <p class="text-sm text-gray-500 mt-1">如有任何问题，请联系客服</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>便捷购物，满意服务</p>
+            <p class="mt-2 text-gray-300">活动：满50元减5元，满100元减12元，满200元减30元</p>
+        </div>
+    </footer>
+
+    <script>
+        // 商品数据
+        const products = [
+            // 碳酸饮料
+            { id: 1, name: '百事可乐(500ml)', price: 3.50, category: '碳酸饮料', brand: '百事' },
+            { id: 2, name: '可口可乐(500ml)', price: 3.50, category: '碳酸饮料', brand: '可口可乐' },
+            { id: 3, name: '芬达橙味(500ml)', price: 3.50, category: '碳酸饮料', brand: '可口可乐' },
+            { id: 4, name: '雪碧(500ml)', price: 3.50, category: '碳酸饮料', brand: '可口可乐' },
+            { id: 5, name: '七喜(500ml)', price: 3.50, category: '碳酸饮料', brand: '百事' },
+            { id: 6, name: '美年达(500ml)', price: 3.50, category: '碳酸饮料', brand: '可口可乐' },
+            { id: 7, name: '元气森林气泡水(500ml)', price: 5.00, category: '碳酸饮料', brand: '元气森林' },
+            { id: 8, name: '屈臣氏苏打水(330ml)', price: 4.00, category: '碳酸饮料', brand: '屈臣氏' },
+            { id: 9, name: '巴黎水(330ml)', price: 8.00, category: '碳酸饮料', brand: '巴黎水' },
+            { id: 10, name: '圣培露(330ml)', price: 7.50, category: '碳酸饮料', brand: '圣培露' },
+            
+            // 矿泉水
+            { id: 11, name: '农夫山泉(550ml)', price: 2.00, category: '矿泉水', brand: '农夫山泉' },
+            { id: 12, name: '怡宝(555ml)', price: 2.00, category: '矿泉水', brand: '怡宝' },
+            { id: 13, name: '康师傅(550ml)', price: 1.50, category: '矿泉水', brand: '康师傅' },
+            { id: 14, name: '百岁山(570ml)', price: 3.00, category: '矿泉水', brand: '百岁山' },
+            { id: 15, name: '依云(500ml)', price: 6.00, category: '矿泉水', brand: '依云' },
+            { id: 16, name: '恒大冰泉(500ml)', price: 3.00, category: '矿泉水', brand: '恒大冰泉' },
+            { id: 17, name: '娃哈哈(596ml)', price: 1.50, category: '矿泉水', brand: '娃哈哈' },
+            { id: 18, name: '昆仑山(510ml)', price: 4.00, category: '矿泉水', brand: '昆仑山' },
+            { id: 19, name: '冰露(550ml)', price: 1.00, category: '矿泉水', brand: '可口可乐' },
+            { id: 20, name: '西藏5100(500ml)', price: 5.00, category: '矿泉水', brand: '西藏5100' },
+            
+            // 果汁饮料
+            { id: 21, name: '美汁源果粒橙(450ml)', price: 4.50, category: '果汁饮料', brand: '可口可乐' },
+            { id: 22, name: '汇源橙汁(1L)', price: 8.00, category: '果汁饮料', brand: '汇源' },
+            { id: 23, name: '农夫果园混合果汁(500ml)', price: 5.00, category: '果汁饮料', brand: '农夫山泉' },
+            { id: 24, name: '味全每日C(500ml)', price: 8.00, category: '果汁饮料', brand: '味全' },
+            { id: 25, name: '果缤纷(500ml)', price: 4.00, category: '果汁饮料', brand: '百事' },
+            { id: 26, name: '鲜橙多(500ml)', price: 4.00, category: '果汁饮料', brand: '可口可乐' },
+            { id: 27, name: 'NFC橙汁(300ml)', price: 12.00, category: '果汁饮料', brand: '农夫山泉' },
+            { id: 28, name: '椰树椰汁(245ml)', price: 4.50, category: '果汁饮料', brand: '椰树' },
+            { id: 29, name: '露露杏仁露(240ml)', price: 4.00, category: '果汁饮料', brand: '露露' },
+            { id: 30, name: '王老吉(310ml)', price: 5.00, category: '果汁饮料', brand: '王老吉' },
+            
+            // 茶饮料
+            { id: 31, name: '康师傅冰红茶(500ml)', price: 3.50, category: '茶饮料', brand: '康师傅' },
+            { id: 32, name: '统一冰红茶(500ml)', price: 3.50, category: '茶饮料', brand: '统一' },
+            { id: 33, name: '康师傅绿茶(500ml)', price: 3.50, category: '茶饮料', brand: '康师傅' },
+            { id: 34, name: '统一绿茶(500ml)', price: 3.50, category: '茶饮料', brand: '统一' },
+            { id: 35, name: '东方树叶(500ml)', price: 5.00, category: '茶饮料', brand: '农夫山泉' },
+            { id: 36, name: '茶π(500ml)', price: 5.00, category: '茶饮料', brand: '农夫山泉' },
+            { id: 37, name: '三得利乌龙茶(500ml)', price: 5.00, category: '茶饮料', brand: '三得利' },
+            { id: 38, name: '伊藤园绿茶(500ml)', price: 5.00, category: '茶饮料', brand: '伊藤园' },
+            { id: 39, name: '立顿奶茶(500ml)', price: 4.50, category: '茶饮料', brand: '立顿' },
+            { id: 40, name: '阿萨姆奶茶(500ml)', price: 4.50, category: '茶饮料', brand: '统一' },
+            
+            // 咖啡饮料
+            { id: 41, name: '雀巢咖啡(180ml)', price: 3.50, category: '咖啡饮料', brand: '雀巢' },
+            { id: 42, name: '星巴克星冰乐(281ml)', price: 8.00, category: '咖啡饮料', brand: '星巴克' },
+            { id: 43, name: '麦斯威尔咖啡(180ml)', price: 3.50, category: '咖啡饮料', brand: '麦斯威尔' },
+            { id: 44, name: '瑞幸厚乳拿铁(330ml)', price: 12.00, category: '咖啡饮料', brand: '瑞幸' },
+            { id: 45, name: '三得利黑乌龙茶咖啡(350ml)', price: 6.00, category: '咖啡饮料', brand: '三得利' },
+            { id: 46, name: 'UCC咖啡(180ml)', price: 4.00, category: '咖啡饮料', brand: 'UCC' },
+            { id: 47, name: '隅田川咖啡液(100ml)', price: 15.00, category: '咖啡饮料', brand: '隅田川' },
+            { id: 48, name: 'illy咖啡(180ml)', price: 8.00, category: '咖啡饮料', brand: 'illy' },
+            { id: 49, name: '太平洋咖啡(330ml)', price: 10.00, category: '咖啡饮料', brand: '太平洋咖啡' },
+            { id: 50, name: '猫屎咖啡(100ml)', price: 20.00, category: '咖啡饮料', brand: '猫屎咖啡' },
+            
+            // 乳制品
+            { id: 51, name: '蒙牛纯牛奶(250ml)', price: 3.50, category: '乳制品', brand: '蒙牛' },
+            { id: 52, name: '伊利纯牛奶(250ml)', price: 3.50, category: '乳制品', brand: '伊利' },
+            { id: 53, name: '光明纯牛奶(250ml)', price: 3.50, category: '乳制品', brand: '光明' },
+            { id: 54, name: '三元纯牛奶(250ml)', price: 3.50, category: '乳制品', brand: '三元' },
+            { id: 55, name: '特仑苏纯牛奶(250ml)', price: 5.00, category: '乳制品', brand: '蒙牛' },
+            { id: 56, name: '金典纯牛奶(250ml)', price: 5.00, category: '乳制品', brand: '伊利' },
+            { id: 57, name: '安慕希酸奶(205g)', price: 6.00, category: '乳制品', brand: '伊利' },
+            { id: 58, name: '纯甄酸奶(200g)', price: 5.50, category: '乳制品', brand: '蒙牛' },
+            { id: 59, name: '光明莫斯利安(200g)', price: 6.00, category: '乳制品', brand: '光明' },
+            { id: 60, name: '君乐宝简醇(200g)', price: 5.00, category: '乳制品', brand: '君乐宝' },
+            
+            // 饼干糕点
+            { id: 61, name: '奥利奥夹心饼干(116g)', price: 6.50, category: '饼干糕点', brand: '亿滋' },
+            { id: 62, name: '趣多多巧克力饼干(116g)', price: 6.50, category: '饼干糕点', brand: '亿滋' },
+            { id: 63, name: '太平梳打饼干(100g)', price: 4.50, category: '饼干糕点', brand: '亿滋' },
+            { id: 64, name: '乐之饼干(100g)', price: 4.50, category: '饼干糕点', brand: '亿滋' },
+            { id: 65, name: '达利园小面包(360g)', price: 8.00, category: '饼干糕点', brand: '达利' },
+            { id: 66, name: '好丽友派(200g)', price: 8.50, category: '饼干糕点', brand: '好丽友' },
+            { id: 67, name: '嘉士利饼干(100g)', price: 4.00, category: '饼干糕点', brand: '嘉士利' },
+            { id: 68, name: '康师傅3+2饼干(100g)', price: 5.00, category: '饼干糕点', brand: '康师傅' },
+            { id: 69, name: '旺旺雪饼(100g)', price: 5.50, category: '饼干糕点', brand: '旺旺' },
+            { id: 70, name: '良品铺子饼干(100g)', price: 8.00, category: '饼干糕点', brand: '良品铺子' },
+            
+            // 薯片膨化
+            { id: 71, name: '乐事原味薯片(70g)', price: 6.50, category: '薯片膨化', brand: '百事' },
+            { id: 72, name: '乐事番茄味薯片(70g)', price: 6.50, category: '薯片膨化', brand: '百事' },
+            { id: 73, name: '可比克薯片(60g)', price: 5.00, category: '薯片膨化', brand: '达利' },
+            { id: 74, name: '上好佳薯片(65g)', price: 5.50, category: '薯片膨化', brand: '上好佳' },
+            { id: 75, name: '品客薯片(100g)', price: 8.00, category: '薯片膨化', brand: '品客' },
+            { id: 76, name: '好丽友薯片(80g)', price: 7.00, category: '薯片膨化', brand: '好丽友' },
+            { id: 77, name: '旺旺仙贝(80g)', price: 6.00, category: '薯片膨化', brand: '旺旺' },
+            { id: 78, name: '浪味仙(70g)', price: 5.50, category: '薯片膨化', brand: '旺旺' },
+            { id: 79, name: '虾条(80g)', price: 5.00, category: '薯片膨化', brand: '上好佳' },
+            { id: 80, name: '妙脆角(80g)', price: 6.00, category: '薯片膨化', brand: '百事' },
+            
+            // 巧克力糖果
+            { id: 81, name: '德芙牛奶巧克力(43g)', price: 6.50, category: '巧克力糖果', brand: '玛氏' },
+            { id: 82, name: '士力架(58g)', price: 6.50, category: '巧克力糖果', brand: '玛氏' },
+            { id: 83, name: 'M&M\'s巧克力(47g)', price: 7.00, category: '巧克力糖果', brand: '玛氏' },
+            { id: 84, name: '好时巧克力(45g)', price: 7.00, category: '巧克力糖果', brand: '好时' },
+            { id: 85, name: '费列罗巧克力(3粒装)', price: 9.00, category: '巧克力糖果', brand: '费列罗' },
+            { id: 86, name: '金莎巧克力(3粒装)', price: 8.00, category: '巧克力糖果', brand: '费列罗' },
+            { id: 87, name: '阿尔卑斯奶糖(100g)', price: 7.00, category: '巧克力糖果', brand: '不凡帝范梅勒' },
+            { id: 88, name: '大白兔奶糖(100g)', price: 8.00, category: '巧克力糖果', brand: '冠生园' },
+            { id: 89, name: '旺仔牛奶糖(100g)', price: 7.50, category: '巧克力糖果', brand: '旺旺' },
+            { id: 90, name: '彩虹糖(55g)', price: 5.50, category: '巧克力糖果', brand: '玛氏' },
+            
+            // 坚果炒货
+            { id: 91, name: '三只松鼠碧根果(100g)', price: 12.00, category: '坚果炒货', brand: '三只松鼠' },
+            { id: 92, name: '三只松鼠腰果(100g)', price: 15.00, category: '坚果炒货', brand: '三只松鼠' },
+            { id: 93, name: '良品铺子巴旦木(100g)', price: 13.00, category: '坚果炒货', brand: '良品铺子' },
+            { id: 94, name: '来伊份松子(100g)', price: 18.00, category: '坚果炒货', brand: '来伊份' },
+            { id: 95, name: '洽洽瓜子(100g)', price: 6.00, category: '坚果炒货', brand: '洽洽' },
+            { id: 96, name: '恰恰山核桃(100g)', price: 10.00, category: '坚果炒货', brand: '洽洽' },
+            { id: 97, name: '盐津铺子花生(100g)', price: 7.00, category: '坚果炒货', brand: '盐津铺子' },
+            { id: 98, name: '甘源青豌豆(100g)', price: 8.00, category: '坚果炒货', brand: '甘源' },
+            { id: 99, name: '有友泡凤爪(80g)', price: 8.50, category: '坚果炒货', brand: '有友' },
+            { id: 100, name: '周黑鸭鸭脖(80g)', price: 12.00, category: '坚果炒货', brand: '周黑鸭' },
+            
+            // 方便面
+            { id: 101, name: '康师傅红烧牛肉面(108g)', price: 4.00, category: '方便面', brand: '康师傅' },
+            { id: 102, name: '康师傅鲜虾鱼板面(108g)', price: 4.00, category: '方便面', brand: '康师傅' },
+            { id: 103, name: '统一老坛酸菜面(112g)', price: 4.00, category: '方便面', brand: '统一' },
+            { id: 104, name: '统一汤达人(125g)', price: 5.50, category: '方便面', brand: '统一' },
+            { id: 105, name: '今麦郎一桶半(130g)', price: 5.00, category: '方便面', brand: '今麦郎' },
+            { id: 106, name: '白象大骨面(108g)', price: 3.50, category: '方便面', brand: '白象' },
+            { id: 107, name: '日清合味道(78g)', price: 5.00, category: '方便面', brand: '日清' },
+            { id: 108, name: '农心辛拉面(120g)', price: 5.50, category: '方便面', brand: '农心' },
+            { id: 109, name: '出前一丁(85g)', price: 6.00, category: '方便面', brand: '日清' },
+            { id: 110, name: '公仔面(70g)', price: 4.50, category: '方便面', brand: '统一' },
+            
+            // 速食食品
+            { id: 111, name: '自热米饭(300g)', price: 15.00, category: '速食食品', brand: '海底捞' },
+            { id: 112, name: '自热火锅(400g)', price: 18.00, category: '速食食品', brand: '自嗨锅' },
+            { id: 113, name: '螺蛳粉(300g)', price: 8.00, category: '速食食品', brand: '好欢螺' },
+            { id: 114, name: '酸辣粉(250g)', price: 7.00, category: '速食食品', brand: '白家陈记' },
+            { id: 115, name: '燕麦片(500g)', price: 12.00, category: '速食食品', brand: '桂格' },
+            { id: 116, name: '藕粉(300g)', price: 10.00, category: '速食食品', brand: '南方' },
+            { id: 117, name: '汤圆(500g)', price: 12.00, category: '速食食品', brand: '三全' },
+            { id: 118, name: '水饺(500g)', price: 13.00, category: '速食食品', brand: '湾仔码头' },
+            { id: 119, name: '火腿肠(300g)', price: 10.00, category: '速食食品', brand: '双汇' },
+            { id: 120, name: '午餐肉(340g)', price: 12.00, category: '速食食品', brand: '梅林' },
+            
+            // 日用品
+            { id: 121, name: '清风抽纸(10包装)', price: 15.00, category: '日用品', brand: '清风' },
+            { id: 122, name: '心相印抽纸(10包装)', price: 14.00, category: '日用品', brand: '心相印' },
+            { id: 123, name: '维达抽纸(10包装)', price: 15.00, category: '日用品', brand: '维达' },
+            { id: 124, name: '洁柔抽纸(10包装)', price: 14.00, category: '日用品', brand: '洁柔' },
+            { id: 125, name: '蓝月亮洗衣液(1kg)', price: 18.00, category: '日用品', brand: '蓝月亮' },
+            { id: 126, name: '立白洗洁精(500g)', price: 6.00, category: '日用品', brand: '立白' },
+            { id: 127, name: '威猛先生洁厕液(500ml)', price: 8.00, category: '日用品', brand: '威猛先生' },
+            { id: 128, name: '奥妙洗衣粉(1kg)', price: 12.00, category: '日用品', brand: '奥妙' },
+            { id: 129, name: '舒肤佳香皂(100g)', price: 4.50, category: '日用品', brand: '舒肤佳' },
+            { id: 130, name: '力士香皂(100g)', price: 4.00, category: '日用品', brand: '力士' },
+            
+            // 个人护理
+            { id: 131, name: '海飞丝洗发水(400ml)', price: 25.00, category: '个人护理', brand: '宝洁' },
+            { id: 132, name: '潘婷洗发水(400ml)', price: 22.00, category: '个人护理', brand: '宝洁' },
+            { id: 133, name: '飘柔洗发水(400ml)', price: 20.00, category: '个人护理', brand: '宝洁' },
+            { id: 134, name: '清扬洗发水(400ml)', price: 23.00, category: '个人护理', brand: '联合利华' },
+            { id: 135, name: '多芬沐浴露(720ml)', price: 20.00, category: '个人护理', brand: '联合利华' },
+            { id: 136, name: '力士沐浴露(720ml)', price: 18.00, category: '个人护理', brand: '力士' },
+            { id: 137, name: '舒肤佳沐浴露(720ml)', price: 18.00, category: '个人护理', brand: '舒肤佳' },
+            { id: 138, name: '欧莱雅洗面奶(100ml)', price: 25.00, category: '个人护理', brand: '欧莱雅' },
+            { id: 139, name: '妮维雅面霜(50g)', price: 30.00, category: '个人护理', brand: '妮维雅' },
+            { id: 140, name: '相宜本草乳液(100ml)', price: 28.00, category: '个人护理', brand: '相宜本草' },
+            
+            // 零食糕点
+            { id: 141, name: '旺旺雪饼(100g)', price: 5.50, category: '零食糕点', brand: '旺旺' },
+            { id: 142, name: '旺旺仙贝(100g)', price: 5.50, category: '零食糕点', brand: '旺旺' },
+            { id: 143, name: '旺旺小小酥(100g)', price: 5.00, category: '零食糕点', brand: '旺旺' },
+            { id: 144, name: '好丽友蛋黄派(100g)', price: 6.00, category: '零食糕点', brand: '好丽友' },
+            { id: 145, name: '好丽友巧克力派(100g)', price: 6.50, category: '零食糕点', brand: '好丽友' },
+            { id: 146, name: '达利蛋黄派(100g)', price: 4.50, category: '零食糕点', brand: '达利' },
+            { id: 147, name: '盼盼法式小面包(100g)', price: 4.00, category: '零食糕点', brand: '盼盼' },
+            { id: 148, name: '奥利奥夹心饼干(100g)', price: 6.50, category: '零食糕点', brand: '亿滋' },
+            { id: 149, name: '趣多多巧克力饼干(100g)', price: 6.50, category: '零食糕点', brand: '亿滋' },
+            { id: 150, name: '太平梳打饼干(100g)', price: 4.50, category: '零食糕点', brand: '亿滋' },
+            
+            // 坚果炒货
+            { id: 151, name: '三只松鼠碧根果(100g)', price: 12.00, category: '坚果炒货', brand: '三只松鼠' },
+            { id: 152, name: '三只松鼠腰果(100g)', price: 15.00, category: '坚果炒货', brand: '三只松鼠' },
+            { id: 153, name: '良品铺子巴旦木(100g)', price: 13.00, category: '坚果炒货', brand: '良品铺子' },
+            { id: 154, name: '来伊份松子(100g)', price: 18.00, category: '坚果炒货', brand: '来伊份' },
+            { id: 155, name: '洽洽瓜子(100g)', price: 6.00, category: '坚果炒货', brand: '洽洽' },
+            { id: 156, name: '恰恰山核桃(100g)', price: 10.00, category: '坚果炒货', brand: '洽洽' },
+            { id: 157, name: '盐津铺子花生(100g)', price: 7.00, category: '坚果炒货', brand: '盐津铺子' },
+            { id: 158, name: '甘源青豌豆(100g)', price: 8.00, category: '坚果炒货', brand: '甘源' },
+            { id: 159, name: '有友泡凤爪(100g)', price: 9.00, category: '坚果炒货', brand: '有友' },
+            { id: 160, name: '周黑鸭鸭脖(100g)', price: 15.00, category: '坚果炒货', brand: '周黑鸭' },
+        ];
+
+        // 购物车数据
+        let cart = [];
+
+        // 分类数据
+        const categories = [
+            '全部商品', '碳酸饮料', '矿泉水', '果汁饮料', '茶饮料', 
+            '咖啡饮料', '乳制品', '饼干糕点', '薯片膨化', '巧克力糖果',
+            '坚果炒货', '方便面', '速食食品', '日用品', '个人护理',
+            '零食糕点'
+        ];
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts(products);
+            updateCartDisplay();
+            setupEventListeners();
+        });
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索按钮点击事件
+            document.getElementById('search-btn').addEventListener('click', searchProducts);
+            
+            // 搜索输入框回车事件
+            document.getElementById('search-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchProducts();
+                }
+            });
+            
+            // 清空购物车按钮
+            document.getElementById('clear-cart').addEventListener('click', clearCart);
+            
+            // 支付按钮
+            document.getElementById('pay-btn').addEventListener('click', () => {
+                document.getElementById('payment-modal').classList.remove('hidden');
+                document.getElementById('payment-amount').textContent = `¥${getTotal().toFixed(2)}`;
+            });
+            
+            // 关闭支付模态框
+            document.getElementById('close-payment').addEventListener('click', () => {
+                document.getElementById('payment-modal').classList.add('hidden');
+            });
+            
+            // 取消支付
+            document.getElementById('cancel-payment').addEventListener('click', () => {
+                document.getElementById('payment-modal').classList.add('hidden');
+            });
+            
+            // 确认支付
+            document.getElementById('confirm-payment').addEventListener('click', confirmPayment);
+            
+            // 关闭小票模态框
+            document.getElementById('close-receipt').addEventListener('click', () => {
+                document.getElementById('receipt-modal').classList.add('hidden');
+            });
+        }
+
+        // 渲染商品列表
+        function renderProducts(productsToRender) {
+            const container = document.getElementById('products-container');
+            container.innerHTML = '';
+            
+            if (productsToRender.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">没有找到匹配的商品</p>';
+                return;
+            }
+            
+            productsToRender.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="https://picsum.photos/seed/${product.id}/300/300" alt="${product.name}" class="w-full h-48 object-cover">
+                        <span class="absolute top-2 left-2 category-badge bg-blue-100 text-blue-800">
+                            ${product.category}
+                        </span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-1">${product.name}</h3>
+                        <p class="text-gray-600 text-sm mb-2">品牌: ${product.brand}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold text-lg">¥${product.price.toFixed(2)}</span>
+                            <button class="add-to-cart-btn bg-primary text-white px-3 py-1 rounded hover:bg-opacity-90 transition-all" 
+                                    data-id="${product.id}">
+                                <i class="fa fa-shopping-cart mr-1"></i> 添加
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                
+                // 添加到购物车按钮事件
+                card.querySelector('.add-to-cart-btn').addEventListener('click', () => {
+                    addToCart(product.id);
+                });
+            });
+        }
+
+        // 添加商品到购物车
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const cartItem = cart.find(item => item.id === productId);
+            
+            if (cartItem) {
+                cartItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1
+                });
+            }
+            
+            updateCartDisplay();
+            showToast(`已添加 ${product.name} 到购物车`);
+        }
+
+        // 更新购物车显示
+        function updateCartDisplay() {
+            const cartItemsElement = document.getElementById('cart-items');
+            const subtotalElement = document.getElementById('subtotal');
+            const discountElement = document.getElementById('discount');
+            const totalElement = document.getElementById('total');
+            const payBtn = document.getElementById('pay-btn');
+            
+            // 如果购物车为空
+            if (cart.length === 0) {
+                cartItemsElement.innerHTML = '<p class="text-gray-500 text-center py-4">请选择商品</p>';
+                subtotalElement.textContent = '¥0.00';
+                discountElement.textContent = '¥0.00';
+                totalElement.textContent = '¥0.00';
+                payBtn.disabled = true;
+                payBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            
+            // 启用支付按钮
+            payBtn.disabled = false;
+            payBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // 计算总价
+            const subtotal = getSubtotal();
+            const discount = getDiscount(subtotal);
+            const total = subtotal - discount;
+            
+            // 更新购物车项目
+            cartItemsElement.innerHTML = '';
+            cart.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'flex justify-between items-center py-2 border-b border-gray-100 last:border-0';
+                itemElement.innerHTML = `
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-sm text-gray-500">¥${item.price.toFixed(2)} × ${item.quantity}</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-primary font-bold mr-4">¥${(item.price * item.quantity).toFixed(2)}</span>
+                        <div class="flex items-center">
+                            <button class="decrease-quantity-btn quantity-btn" data-id="${item.id}">
+                                <i class="fa fa-minus text-xs"></i>
+                            </button>
+                            <span class="mx-2">${item.quantity}</span>
+                            <button class="increase-quantity-btn quantity-btn" data-id="${item.id}">
+                                <i class="fa fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                cartItemsElement.appendChild(itemElement);
+                
+                // 减少数量按钮
+                itemElement.querySelector('.decrease-quantity-btn').addEventListener('click', () => {
+                    decreaseQuantity(item.id);
+                });
+                
+                // 增加数量按钮
+                itemElement.querySelector('.increase-quantity-btn').addEventListener('click', () => {
+                    increaseQuantity(item.id);
+                });
+            });
+            
+            // 更新价格
+            subtotalElement.textContent = `¥${subtotal.toFixed(2)}`;
+            discountElement.textContent = `¥${discount.toFixed(2)}`;
+            totalElement.textContent = `¥${total.toFixed(2)}`;
+        }
+
+        // 计算购物车小计
+        function getSubtotal() {
+            return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
+        // 计算折扣
+        function getDiscount(subtotal) {
+            if (subtotal >= 200) {
+                return 30;
+            } else if (subtotal >= 100) {
+                return 12;
+            } else if (subtotal >= 50) {
+                return 5;
+            }
+            return 0;
+        }
+
+        // 获取最终总价
+        function getTotal() {
+            return getSubtotal() - getDiscount(getSubtotal());
+        }
+
+        // 增加商品数量
+        function increaseQuantity(productId) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity += 1;
+                updateCartDisplay();
+            }
+        }
+
+        // 减少商品数量
+        function decreaseQuantity(productId) {
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex !== -1) {
+                const item = cart[itemIndex];
+                if (item.quantity > 1) {
+                    item.quantity -= 1;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+                updateCartDisplay();
+            }
+        }
+
+        // 清空购物车
+        function clearCart() {
+            if (cart.length === 0) return;
+            
+            // 添加确认对话框
+            if (confirm('确定要清空购物车吗？')) {
+                cart = [];
+                updateCartDisplay();
+                showToast('购物车已清空');
+            }
+        }
+
+        // 搜索商品
+        function searchProducts() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderProducts(products);
+                return;
+            }
+            
+            const filteredProducts = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) || 
+                product.brand.toLowerCase().includes(searchTerm) ||
+                product.category.toLowerCase().includes(searchTerm)
+            );
+            
+            renderProducts(filteredProducts);
+        }
+
+        // 确认支付
+        function confirmPayment() {
+            // 隐藏支付模态框
+            document.getElementById('payment-modal').classList.add('hidden');
+            
+            // 显示小票
+            document.getElementById('receipt-modal').classList.remove('hidden');
+            
+            // 生成当前时间
+            const now = new Date();
+            const receiptTime = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('receipt-time').textContent = receiptTime;
+            
+            // 生成小票项目
+            const receiptItemsElement = document.getElementById('receipt-items');
+            receiptItemsElement.innerHTML = '';
+            
+            cart.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'receipt-item';
+                itemElement.innerHTML = `
+                    <span>${item.name} × ${item.quantity}</span>
+                    <span>¥${(item.price * item.quantity).toFixed(2)}</span>
+                `;
+                receiptItemsElement.appendChild(itemElement);
+            });
+            
+            // 添加折扣行
+            const discount = getDiscount(getSubtotal());
+            if (discount > 0) {
+                const discountElement = document.createElement('div');
+                discountElement.className = 'receipt-item text-green-600';
+                discountElement.innerHTML = `
+                    <span>优惠</span>
+                    <span>-¥${discount.toFixed(2)}</span>
+                `;
+                receiptItemsElement.appendChild(discountElement);
+            }
+            
+            // 显示总价
+            document.getElementById('receipt-total').textContent = `¥${getTotal().toFixed(2)}`;
+            
+            // 清空购物车
+            cart = [];
+            updateCartDisplay();
+        }
+
+        // 显示提示消息
+        function showToast(message) {
+            // 检查是否已存在toast元素
+            let toast = document.getElementById('toast-message');
+            
+            if (!toast) {
+                // 创建toast元素
+                toast = document.createElement('div');
+                toast.id = 'toast-message';
+                toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-dark text-white px-4 py-2 rounded-lg shadow-lg z-50 opacity-0 transition-opacity duration-300';
+                document.body.appendChild(toast);
+            }
+            
+            // 设置消息内容
+            toast.textContent = message;
+            
+            // 显示toast
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城际铁路购票系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: #0d47a1;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 32px;
+            color: #ffc107;
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .datetime {
+            text-align: right;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .map-section {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .map-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+        
+        .map-title h2 {
+            color: #0d47a1;
+            font-size: 22px;
+        }
+        
+        .route-map {
+            height: 500px;
+            background: linear-gradient(to bottom, #e3f2fd, #bbdefb);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .station {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 120px;
+        }
+        
+        .station-dot {
+            width: 18px;
+            height: 18px;
+            background: #0d47a1;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px #0d47a1;
+            margin-bottom: 8px;
+            z-index: 2;
+        }
+        
+        .station-name {
+            font-weight: 600;
+            text-align: center;
+            font-size: 14px;
+            color: #0d47a1;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .station-distance {
+            font-size: 12px;
+            color: #546e7a;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        
+        .route-line {
+            position: absolute;
+            height: 4px;
+            background: #0d47a1;
+            left: 60px;
+            right: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        .ticket-section {
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .ticket-title {
+            text-align: center;
+            color: #0d47a1;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #37474f;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #bbdefb;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #e3f2fd;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        select:focus {
+            border-color: #0d47a1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+        }
+        
+        .info-display {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #0d47a1;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #bbdefb;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #37474f;
+        }
+        
+        .info-value {
+            font-weight: 700;
+            color: #0d47a1;
+        }
+        
+        .price {
+            font-size: 24px;
+            color: #e91e63;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-calculate {
+            background: #ff9800;
+            color: white;
+            margin-bottom: 15px;
+        }
+        
+        .btn-calculate:hover {
+            background: #f57c00;
+        }
+        
+        .btn-pay {
+            background: #4caf50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-pay:hover {
+            background: #388e3c;
+        }
+        
+        .btn-pay:disabled {
+            background: #a5d6a7;
+            cursor: not-allowed;
+        }
+        
+        .ticket-result {
+            background: #e8f5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: center;
+            border: 2px dashed #4caf50;
+            display: none;
+        }
+        
+        .ticket-result h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        
+        .ticket-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .ticket-item strong {
+            color: #37474f;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .ticket-item span {
+            color: #0d47a1;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        footer {
+            background: #0d47a1;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 0 0 12px 12px;
+            font-size: 14px;
+        }
+        
+        /* 支付弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-title {
+            text-align: center;
+            color: #0d47a1;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .payment-info {
+            background: #f5f9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #bbdefb;
+        }
+        
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 17px;
+        }
+        
+        .payment-label {
+            color: #37474f;
+            font-weight: 500;
+        }
+        
+        .payment-value {
+            font-weight: 700;
+        }
+        
+        .original-price {
+            color: #666;
+            text-decoration: line-through;
+        }
+        
+        .discount-price {
+            color: #e91e63;
+            font-size: 24px;
+        }
+        
+        .discount-tag {
+            background: #ffeb3b;
+            color: #333;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-left: 8px;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .payment-method {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #bbdefb;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-method:hover, .payment-method.active {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+        
+        .payment-method i {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #0d47a1;
+        }
+        
+        .btn-confirm {
+            background: #4caf50;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        .btn-confirm:hover {
+            background: #388e3c;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .ticket-section {
+                width: 100%;
+            }
+            
+            .route-map {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-train"></i>
+                <h1>城际铁路购票系统</h1>
+            </div>
+            <div class="datetime">
+                <div id="current-date">2023年7月27日</div>
+                <div id="current-time">星期四 10:30:15</div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="map-section">
+                <div class="map-title">
+                    <h2>城际铁路线路图</h2>
+                    <div class="total-distance">总里程: 286公里 | 最高票价: 79元</div>
+                </div>
+                <div class="route-map">
+                    <div class="route-line"></div>
+                    <div class="station" style="left: 0%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">西京站</div>
+                        <div class="station-distance">0km</div>
+                    </div>
+                    <div class="station" style="left: 15%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">西京机场站</div>
+                        <div class="station-distance">23km</div>
+                    </div>
+                    <div class="station" style="left: 22%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">西京航空港站</div>
+                        <div class="station-distance">32km</div>
+                    </div>
+                    <div class="station" style="left: 35%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">银山卫站</div>
+                        <div class="station-distance">68km</div>
+                    </div>
+                    <div class="station" style="left: 55%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">凌兆站</div>
+                        <div class="station-distance">118km</div>
+                    </div>
+                    <div class="station" style="left: 65%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">闵行东站</div>
+                        <div class="station-distance">145km</div>
+                    </div>
+                    <div class="station" style="left: 75%; top: 50%;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">西京东站</div>
+                        <div class="station-distance">189km</div>
+                    </div>
+                    <!-- 修复：调整位置到95%并添加右侧内边距 -->
+                    <div class="station" style="left: 86%; top: 50%; padding-right: 30px;">
+                        <div class="station-dot"></div>
+                        <div class="station-name">花卉世界站</div>
+                        <div class="station-distance">286km</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ticket-section">
+                <h2 class="ticket-title">车票预订</h2>
+                
+                <div class="form-group">
+                    <label for="departure">出发站</label>
+                    <select id="departure">
+                        <option value="">-- 请选择出发站 --</option>
+                        <option value="西京站" data-distance="0">西京站 (0km)</option>
+                        <option value="西京机场站" data-distance="23">西京机场站 (23km)</option>
+                        <option value="西京航空港站" data-distance="32">西京航空港站 (32km)</option>
+                        <option value="银山卫站" data-distance="68">银山卫站 (68km)</option>
+                        <option value="凌兆站" data-distance="118">凌兆站 (118km)</option>
+                        <option value="闵行东站" data-distance="145">闵行东站 (145km)</option>
+                        <option value="西京东站" data-distance="189">西京东站 (189km)</option>
+                        <option value="花卉世界站" data-distance="286">花卉世界站 (286km)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="arrival">到达站</label>
+                    <select id="arrival">
+                        <option value="">-- 请选择到达站 --</option>
+                        <option value="西京站" data-distance="0">西京站 (0km)</option>
+                        <option value="西京机场站" data-distance="23">西京机场站 (23km)</option>
+                        <option value="西京航空港站" data-distance="32">西京航空港站 (32km)</option>
+                        <option value="银山卫站" data-distance="68">银山卫站 (68km)</option>
+                        <option value="凌兆站" data-distance="118">凌兆站 (118km)</option>
+                        <option value="闵行东站" data-distance="145">闵行东站 (145km)</option>
+                        <option value="西京东站" data-distance="189">西京东站 (189km)</option>
+                        <option value="花卉世界站" data-distance="286">花卉世界站 (286km)</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-calculate" id="calculate-btn">
+                    计算票价与耗时
+                </button>
+                
+                <div class="info-display">
+                    <div class="info-item">
+                        <span class="info-label">票价:</span>
+                        <span class="info-value price" id="price">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">距离:</span>
+                        <span class="info-value" id="distance">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">预计耗时:</span>
+                        <span class="info-value" id="duration">--</span>
+                    </div>
+                </div>
+                
+                <button class="btn btn-pay" id="pay-btn" disabled>
+                    <i class="fas fa-ticket-alt"></i>
+                    立即支付
+                </button>
+                
+                <div class="ticket-result" id="ticket-result">
+                    <h3>购票成功！</h3>
+                    <p>感谢您使用城际铁路购票系统</p>
+                    
+                    <div class="ticket-info">
+                        <div class="ticket-item">
+                            <strong>车次</strong>
+                            <span id="train-number">S----</span>
+                        </div>
+                        <div class="ticket-item">
+                            <strong>出发时间</strong>
+                            <span id="departure-time">--:--</span>
+                        </div>
+                        <div class="ticket-item">
+                            <strong>出发站</strong>
+                            <span id="ticket-from">--</span>
+                        </div>
+                        <div class="ticket-item">
+                            <strong>到达站</strong>
+                            <span id="ticket-to">--</span>
+                        </div>
+                        <div class="ticket-item">
+                            <strong>票价</strong>
+                            <span id="ticket-price">--</span>
+                        </div>
+                        <div class="ticket-item">
+                            <strong>预计耗时</strong>
+                            <span id="ticket-duration">--</span>
+                        </div>
+                    </div>
+                    
+                    <p>请凭身份证在车站自助取票机取票</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>城际铁路购票系统 © 2023 版权所有 | 最高票价: 79元 | 服务热线: 12306</p>
+        </footer>
+    </div>
+
+    <!-- 支付弹窗 -->
+    <div class="modal" id="payment-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <h2 class="modal-title">支付确认</h2>
+            
+            <div class="payment-info">
+                <div class="payment-item">
+                    <span class="payment-label">车票信息:</span>
+                    <span class="payment-value" id="payment-route">--</span>
+                </div>
+                <div class="payment-item">
+                    <span class="payment-label">原价:</span>
+                    <span class="payment-value original-price" id="original-price">--</span>
+                </div>
+                <div class="payment-item">
+                    <span class="payment-label">折扣:</span>
+                    <span class="payment-value" id="discount-rate">--</span>
+                </div>
+                <div class="payment-item">
+                    <span class="payment-label">应付金额:</span>
+                    <span class="payment-value discount-price" id="final-price">--</span>
+                </div>
+            </div>
+            
+            <h3>选择支付方式</h3>
+            <div class="payment-methods">
+                <div class="payment-method" data-method="alipay">
+                    <i class="fab fa-alipay"></i>
+                    <div>支付宝</div>
+                </div>
+                <div class="payment-method" data-method="wechat">
+                    <i class="fab fa-weixin"></i>
+                    <div>微信支付</div>
+                </div>
+                <div class="payment-method" data-method="bank">
+                    <i class="fas fa-credit-card"></i>
+                    <div>银行卡</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-confirm" id="confirm-pay">
+                <i class="fas fa-check-circle"></i>
+                确认支付
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 更新日期和时间
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const timeStr = now.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekday = weekdays[now.getDay()];
+            
+            document.getElementById('current-date').textContent = dateStr;
+            document.getElementById('current-time').textContent = `${weekday} ${timeStr}`;
+        }
+        
+        // 初始化时间
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        // DOM 元素
+        const departureSelect = document.getElementById('departure');
+        const arrivalSelect = document.getElementById('arrival');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const payBtn = document.getElementById('pay-btn');
+        const priceDisplay = document.getElementById('price');
+        const distanceDisplay = document.getElementById('distance');
+        const durationDisplay = document.getElementById('duration');
+        const ticketResult = document.getElementById('ticket-result');
+        const paymentModal = document.getElementById('payment-modal');
+        const closeModal = document.getElementById('close-modal');
+        const confirmPayBtn = document.getElementById('confirm-pay');
+        const paymentRoute = document.getElementById('payment-route');
+        const originalPrice = document.getElementById('original-price');
+        const discountRate = document.getElementById('discount-rate');
+        const finalPriceDisplay = document.getElementById('final-price'); // 修复变量名冲突
+        
+        // 票价计算参数
+        const MAX_PRICE = 79;
+        const MAX_DISTANCE = 286;
+        const BASE_PRICE_PER_KM = MAX_PRICE / MAX_DISTANCE;
+        
+        // 当前车票信息
+        let currentTicket = {
+            departure: '',
+            arrival: '',
+            distance: 0,
+            price: 0,
+            duration: ''
+        };
+        
+        // 计算票价和耗时
+        function calculateTicket() {
+            const departureOption = departureSelect.options[departureSelect.selectedIndex];
+            const arrivalOption = arrivalSelect.options[arrivalSelect.selectedIndex];
+            
+            if (!departureOption.value || !arrivalOption.value) {
+                alert("请选择出发站和到达站");
+                return;
+            }
+            
+            if (departureOption.value === arrivalOption.value) {
+                alert("出发站和到达站不能相同");
+                return;
+            }
+            
+            const departureName = departureOption.value;
+            const arrivalName = arrivalOption.value;
+            const departureDist = parseInt(departureOption.getAttribute('data-distance'));
+            const arrivalDist = parseInt(arrivalOption.getAttribute('data-distance'));
+            const distance = Math.abs(arrivalDist - departureDist);
+            
+            // 计算票价
+            let price = distance * BASE_PRICE_PER_KM;
+            price = Math.round(price);
+            
+            // 计算耗时 (平均速度90km/h，随机浮动±15分钟)
+            const avgSpeed = 90; // km/h
+            let durationHours = distance / avgSpeed;
+            let durationMinutes = Math.round(durationHours * 60);
+            
+            // 添加随机浮动（±15分钟）
+            const randomOffset = Math.floor(Math.random() * 31) - 15;
+            durationMinutes = Math.max(30, durationMinutes + randomOffset);
+            
+            // 格式化为小时和分钟
+            const hours = Math.floor(durationMinutes / 60);
+            const minutes = durationMinutes % 60;
+            const durationStr = hours > 0 ? 
+                `${hours}小时${minutes}分钟` : 
+                `${minutes}分钟`;
+            
+            // 更新显示
+            distanceDisplay.textContent = `${distance}公里`;
+            priceDisplay.textContent = `${price}元`;
+            durationDisplay.textContent = durationStr;
+            
+            // 保存车票信息
+            currentTicket = {
+                departure: departureName,
+                arrival: arrivalName,
+                distance: distance,
+                price: price,
+                duration: durationStr
+            };
+            
+            // 启用支付按钮
+            payBtn.disabled = false;
+        }
+        
+        // 打开支付弹窗
+        function openPaymentModal() {
+            if (!currentTicket.departure) return;
+            
+            // 生成随机折扣 (85折到不打折)
+            const discount = Math.random() * 0.15 + 0.85;
+            const discountText = Math.round(discount * 100) / 10 + '折';
+            // 修复变量名冲突
+            const discountedPrice = Math.round(currentTicket.price * discount);
+            
+            // 更新支付信息
+            paymentRoute.textContent = `${currentTicket.departure} → ${currentTicket.arrival}`;
+            originalPrice.textContent = `${currentTicket.price}元`;
+            discountRate.textContent = discountText;
+            discountRate.innerHTML += `<span class="discount-tag">限时优惠</span>`;
+            // 修复：使用正确的DOM元素显示最终价格
+            finalPriceDisplay.textContent = `${discountedPrice}元`;
+            
+            // 更新当前票价的折扣信息
+            currentTicket.discount = discount;
+            currentTicket.finalPrice = discountedPrice;
+            
+            // 显示弹窗
+            paymentModal.style.display = 'flex';
+        }
+        
+        // 支付功能
+        function processPayment() {
+            const departureName = currentTicket.departure;
+            const arrivalName = currentTicket.arrival;
+            const finalPrice = currentTicket.finalPrice || currentTicket.price;
+            
+            // 生成随机车次号 (S开头4位数字)
+            const trainNumber = "S" + Math.floor(1000 + Math.random() * 9000);
+            
+            // 生成出发时间 (当前时间+10-60分钟)
+            const now = new Date();
+            const minutesToAdd = Math.floor(Math.random() * 51) + 10;
+            now.setMinutes(now.getMinutes() + minutesToAdd);
+            
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const departureTime = `${hours}:${minutes}`;
+            
+            // 更新车票信息
+            document.getElementById('train-number').textContent = trainNumber;
+            document.getElementById('departure-time').textContent = departureTime;
+            document.getElementById('ticket-from').textContent = departureName;
+            document.getElementById('ticket-to').textContent = arrivalName;
+            document.getElementById('ticket-price').textContent = `${finalPrice}元`;
+            document.getElementById('ticket-duration').textContent = currentTicket.duration;
+            
+            // 显示车票结果
+            ticketResult.style.display = 'block';
+            
+            // 滚动到车票结果
+            ticketResult.scrollIntoView({ behavior: 'smooth' });
+            
+            // 禁用支付按钮
+            payBtn.disabled = true;
+            
+            // 关闭支付弹窗
+            paymentModal.style.display = 'none';
+        }
+        
+        // 事件监听
+        calculateBtn.addEventListener('click', calculateTicket);
+        payBtn.addEventListener('click', openPaymentModal);
+        closeModal.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+        });
+        confirmPayBtn.addEventListener('click', processPayment);
+        
+        // 点击支付方式
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', () => {
+                // 移除所有选中状态
+                document.querySelectorAll('.payment-method').forEach(m => {
+                    m.classList.remove('active');
+                });
+                // 添加当前选中状态
+                method.classList.add('active');
+            });
+        });
+        
+        // 点击弹窗外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

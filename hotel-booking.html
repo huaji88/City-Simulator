@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豪华酒店 - 在线预订</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#f59e0b',
+                        accent: '#f3f4f6',
+                        dark: '#1f2937',
+                        light: '#f9fafb'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .room-card {
+                @apply bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all;
+            }
+            .date-input {
+                @apply border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50;
+            }
+            .receipt {
+                @apply bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto text-center;
+            }
+            .receipt-header {
+                @apply border-b border-gray-200 pb-4 mb-4;
+            }
+            .receipt-item {
+                @apply flex justify-between py-1;
+            }
+            .receipt-total {
+                @apply font-bold pt-2 border-t border-gray-200 mt-2;
+            }
+            .room-badge {
+                @apply text-xs font-medium px-2.5 py-0.5 rounded-full;
+            }
+            .available {
+                @apply bg-green-100 text-green-800;
+            }
+            .booked {
+                @apply bg-red-100 text-red-800;
+            }
+            .processing {
+                @apply bg-yellow-100 text-yellow-800;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 头部 -->
+    <header class="bg-primary text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-center md:text-left mb-4 md:mb-0">
+                    <h1 class="text-4xl font-bold mb-2">豪华大酒店</h1>
+                    <p class="text-gray-300">尊贵体验，尽在奢华</p>
+                </div>
+                <div class="flex items-center">
+                    <i class="fa fa-phone-square text-2xl mr-2"></i>
+                    <span>客服电话：010-8888 8888</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 搜索和筛选 -->
+    <div class="bg-light py-4 shadow-md">
+        <div class="container mx-auto px-4">
+            <div class="max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">入住日期</label>
+                        <input type="date" id="checkin-date" class="date-input w-full">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">退房日期</label>
+                        <input type="date" id="checkout-date" class="date-input w-full">
+                    </div>
+                    <div class="flex flex-col justify-end">
+                        <button id="search-rooms" class="btn-primary">
+                            <i class="fa fa-search mr-1"></i> 搜索房间
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 房间展示区 -->
+            <div class="lg:w-2/3">
+                <h2 class="text-2xl font-bold mb-6 pb-2 border-b-2 border-primary">可用房间</h2>
+                <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 房间将通过JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 预订信息和结算区 -->
+            <div class="lg:w-1/3">
+                <div class="bg-white rounded-lg shadow-lg p-6 sticky top-4">
+                    <h2 class="text-2xl font-bold mb-4 pb-2 border-b border-gray-200">预订信息</h2>
+                    
+                    <div id="booking-details" class="mb-6">
+                        <div class="mb-3">
+                            <p class="text-gray-500">入住日期</p>
+                            <p id="booking-checkin" class="font-medium">未选择</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-gray-500">退房日期</p>
+                            <p id="booking-checkout" class="font-medium">未选择</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-gray-500">房间类型</p>
+                            <p id="booking-room-type" class="font-medium">未选择</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-gray-500">原价</p>
+                            <p id="booking-original-price" class="font-medium line-through text-gray-500">¥0.00/晚</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-gray-500">优惠价</p>
+                            <p id="booking-price" class="font-medium text-primary">¥0.00/晚</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-gray-500">入住天数</p>
+                            <p id="booking-days" class="font-medium">0晚</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4 mb-4">
+                        <div class="flex justify-between mb-2">
+                            <span>房费小计：</span>
+                            <span id="subtotal">¥0.00</span>
+                        </div>
+                        <div class="flex justify-between mb-2 text-green-600" id="discount">
+                            <span>优惠：</span>
+                            <span>¥0.00</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl">
+                            <span>总计：</span>
+                            <span id="total">¥0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button id="clear-booking" class="flex-1 btn-secondary">
+                            <i class="fa fa-refresh mr-1"></i> 重置
+                        </button>
+                        <button id="book-btn" class="flex-1 btn-primary" disabled>
+                            <i class="fa fa-check-circle mr-1"></i> 确认预订
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 个人信息表单模态框 -->
+    <div id="guest-info-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold">填写个人信息</h3>
+                <button id="close-guest-info" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="guest-info-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="guest-name" class="block text-gray-700 mb-1">姓名</label>
+                        <input type="text" id="guest-name" class="date-input w-full" required>
+                    </div>
+                    <div>
+                        <label for="guest-phone" class="block text-gray-700 mb-1">手机号码</label>
+                        <input type="tel" id="guest-phone" class="date-input w-full" required>
+                    </div>
+                    <div>
+                        <label for="guest-id" class="block text-gray-700 mb-1">身份证号码</label>
+                        <input type="text" id="guest-id" class="date-input w-full" required>
+                    </div>
+                    <div>
+                        <label for="guest-email" class="block text-gray-700 mb-1">电子邮箱</label>
+                        <input type="email" id="guest-email" class="date-input w-full">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="membership-checkbox" class="mr-2">
+                        <span>我是南呈会会员（可享5-7折优惠）</span>
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label for="membership-id" class="block text-gray-700 mb-1">会员卡号（选填）</label>
+                    <input type="text" id="membership-id" class="date-input w-full">
+                </div>
+                <div class="mb-4">
+                    <label for="special-request" class="block text-gray-700 mb-1">特殊要求</label>
+                    <textarea id="special-request" class="date-input w-full" rows="3"></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" id="cancel-guest-info" class="flex-1 btn-secondary">取消</button>
+                    <button type="submit" class="flex-1 btn-primary">继续支付</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 付款模态框 -->
+    <div id="payment-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold">确认支付</h3>
+                <button id="close-payment" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="mb-6 text-center">
+                <p class="text-xl mb-2">您的订单总金额为：</p>
+                <p class="text-3xl font-bold text-primary" id="payment-amount">¥0.00</p>
+                <p class="text-sm text-gray-500 mt-1" id="membership-discount-text"></p>
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 mb-2">选择支付方式</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="border rounded-md p-3 flex flex-col items-center hover:bg-gray-50 transition-all" data-payment="alipay">
+                        <i class="fa fa-credit-card text-2xl mb-1"></i>
+                        <span class="text-sm">支付宝</span>
+                    </button>
+                    <button class="border rounded-md p-3 flex flex-col items-center hover:bg-gray-50 transition-all" data-payment="wechat">
+                        <i class="fa fa-wechat text-2xl mb-1"></i>
+                        <span class="text-sm">微信支付</span>
+                    </button>
+                    <button class="border rounded-md p-3 flex flex-col items-center hover:bg-gray-50 transition-all" data-payment="card">
+                        <i class="fa fa-credit-card-alt text-2xl mb-1"></i>
+                        <span class="text-sm">银行卡</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button id="cancel-payment" class="flex-1 btn-secondary">取消</button>
+                <button id="confirm-payment" class="flex-1 btn-primary">确认支付</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支付成功后显示小票 -->
+    <div id="receipt-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="receipt w-full max-w-md relative">
+            <button id="close-receipt" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i class="fa fa-times text-xl"></i>
+            </button>
+            <div class="receipt-header">
+                <h3 class="text-2xl font-bold mb-1">豪华大酒店</h3>
+                <p class="text-sm text-gray-500">客服电话：010-8888 8888</p>
+                <p class="text-sm text-gray-500 mt-1">订单号：<span id="order-number">DH20250707001</span></p>
+                <p class="text-sm text-gray-500 mt-1">交易时间：<span id="receipt-time">2025-07-07 12:34:56</span></p>
+                <p class="text-sm text-gray-500 mt-1" id="receipt-membership">普通会员</p>
+            </div>
+            <div id="receipt-items" class="mb-4">
+                <!-- 小票项目将通过JS动态生成 -->
+            </div>
+            <div class="flex justify-between receipt-total">
+                <span>房费小计：</span>
+                <span id="receipt-subtotal">¥0.00</span>
+            </div>
+            <div class="flex justify-between receipt-total text-green-600">
+                <span>会员折扣：</span>
+                <span id="receipt-membership-discount">¥0.00</span>
+            </div>
+            <div class="flex justify-between receipt-total text-green-600">
+                <span>连住优惠：</span>
+                <span id="receipt-stay-discount">¥0.00</span>
+            </div>
+            <div class="flex justify-between receipt-total font-bold">
+                <span>总计：</span>
+                <span id="receipt-total">¥0.00</span>
+            </div>
+            <div class="mt-6 text-center">
+                <p class="text-lg font-medium mb-2">您的房间号是：<span id="room-number" class="text-primary font-bold text-xl">8888</span></p>
+                <p class="text-sm text-gray-500">入住时间：<span id="receipt-checkin">2025-07-07</span></p>
+                <p class="text-sm text-gray-500">退房时间：<span id="receipt-checkout">2025-07-08</span></p>
+                <p class="text-sm text-gray-500 mt-2">感谢您的惠顾，期待再次为您服务！</p>
+                <p class="text-sm text-gray-500 mt-1">如有任何问题，请联系前台</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>尊贵体验，尽在奢华</p>
+            <p class="mt-2 text-gray-300">活动：会员入住享5-7折优惠，连续入住3晚额外95折</p>
+        </div>
+    </footer>
+
+    <script>
+        // 房间数据 - 价格降低40%左右
+        const rooms = [
+            { 
+                id: 1, 
+                name: '豪华单人间', 
+                originalPrice: 398, 
+                price: 238, 
+                capacity: 1, 
+                size: 30, 
+                bed: '1.5米双人床', 
+                view: '城市景观',
+                amenities: ['免费WiFi', '独立卫浴', '空调', '电视', '迷你冰箱'],
+                image: 'https://picsum.photos/seed/room1/600/400',
+                status: 'available'
+            },
+            { 
+                id: 2, 
+                name: '豪华标准间', 
+                originalPrice: 498, 
+                price: 298, 
+                capacity: 2, 
+                size: 40, 
+                bed: '2张1.2米单人床', 
+                view: '城市景观',
+                amenities: ['免费WiFi', '独立卫浴', '空调', '电视', '迷你冰箱', '沙发'],
+                image: 'https://picsum.photos/seed/room2/600/400',
+                status: 'available'
+            },
+            { 
+                id: 3, 
+                name: '行政商务间', 
+                originalPrice: 698, 
+                price: 418, 
+                capacity: 2, 
+                size: 45, 
+                bed: '1.8米双人床', 
+                view: '城市景观',
+                amenities: ['免费WiFi', '独立卫浴', '空调', '电视', '迷你冰箱', '办公桌', '行政礼遇'],
+                image: 'https://picsum.photos/seed/room3/600/400',
+                status: 'available'
+            },
+            { 
+                id: 4, 
+                name: '豪华套房', 
+                originalPrice: 998, 
+                price: 598, 
+                capacity: 2, 
+                size: 60, 
+                bed: '1.8米双人床', 
+                view: '城市景观',
+                amenities: ['免费WiFi', '独立卫浴', '空调', '电视', '迷你冰箱', '客厅', '办公桌', '行政礼遇'],
+                image: 'https://picsum.photos/seed/room4/600/400',
+                status: 'available'
+            },
+            { 
+                id: 5, 
+                name: '行政套房', 
+                originalPrice: 1298, 
+                price: 778, 
+                capacity: 3, 
+                size: 80, 
+                bed: '1.8米双人床+1.2米单人床', 
+                view: '城市景观',
+                amenities: ['免费WiFi', '独立卫浴', '空调', '电视', '迷你冰箱', '客厅', '办公桌', '行政礼遇', 'SPA'],
+                image: 'https://picsum.photos/seed/room5/600/400',
+                status: 'available'
+            },
+            { 
+                id: 6, 
+                name: '总统套房', 
+                originalPrice: 2998, 
+                price: 1798, 
+                capacity: 4, 
+                size: 150, 
+                bed: '2张1.8米双人床', 
+                view: '城市景观',
+                amenities: ['免费WiFi', '独立卫浴', '空调', '电视', '迷你冰箱', '客厅', '餐厅', '办公桌', '行政礼遇', 'SPA', '私人管家'],
+                image: 'https://picsum.photos/seed/room6/600/400',
+                status: 'available'
+            }
+        ];
+
+        // 当前预订信息
+        let currentBooking = {
+            roomId: null,
+            checkinDate: null,
+            checkoutDate: null,
+            days: 0,
+            totalPrice: 0,
+            membershipDiscount: 0,
+            stayDiscount: 0
+        };
+
+        // DOM元素
+        const roomsContainer = document.getElementById('rooms-container');
+        const checkinDateInput = document.getElementById('checkin-date');
+        const checkoutDateInput = document.getElementById('checkout-date');
+        const searchRoomsBtn = document.getElementById('search-rooms');
+        const bookingCheckinElement = document.getElementById('booking-checkin');
+        const bookingCheckoutElement = document.getElementById('booking-checkout');
+        const bookingRoomTypeElement = document.getElementById('booking-room-type');
+        const bookingOriginalPriceElement = document.getElementById('booking-original-price');
+        const bookingPriceElement = document.getElementById('booking-price');
+        const bookingDaysElement = document.getElementById('booking-days');
+        const subtotalElement = document.getElementById('subtotal');
+        const discountElement = document.getElementById('discount');
+        const totalElement = document.getElementById('total');
+        const bookBtn = document.getElementById('book-btn');
+        const clearBookingBtn = document.getElementById('clear-booking');
+        const guestInfoModal = document.getElementById('guest-info-modal');
+        const closeGuestInfoBtn = document.getElementById('close-guest-info');
+        const cancelGuestInfoBtn = document.getElementById('cancel-guest-info');
+        const guestInfoForm = document.getElementById('guest-info-form');
+        const membershipCheckbox = document.getElementById('membership-checkbox');
+        const membershipIdInput = document.getElementById('membership-id');
+        const paymentModal = document.getElementById('payment-modal');
+        const closePaymentBtn = document.getElementById('close-payment');
+        const cancelPaymentBtn = document.getElementById('cancel-payment');
+        const confirmPaymentBtn = document.getElementById('confirm-payment');
+        const receiptModal = document.getElementById('receipt-modal');
+        const closeReceiptBtn = document.getElementById('close-receipt');
+        const receiptItemsContainer = document.getElementById('receipt-items');
+        const receiptSubtotalElement = document.getElementById('receipt-subtotal');
+        const receiptMembershipDiscountElement = document.getElementById('receipt-membership-discount');
+        const receiptStayDiscountElement = document.getElementById('receipt-stay-discount');
+        const receiptTotalElement = document.getElementById('receipt-total');
+        const receiptTimeElement = document.getElementById('receipt-time');
+        const receiptMembershipElement = document.getElementById('receipt-membership');
+        const orderNumberElement = document.getElementById('order-number');
+        const roomNumberElement = document.getElementById('room-number');
+        const receiptCheckinElement = document.getElementById('receipt-checkin');
+        const receiptCheckoutElement = document.getElementById('receipt-checkout');
+        const paymentAmountElement = document.getElementById('payment-amount');
+        const membershipDiscountTextElement = document.getElementById('membership-discount-text');
+
+        // 设置默认日期（今天和明天）
+        function setDefaultDates() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            checkinDateInput.valueAsDate = today;
+            checkoutDateInput.valueAsDate = tomorrow;
+            
+            // 更新预订信息
+            updateBookingInfo();
+        }
+
+        // 初始化房间列表
+        function initRooms() {
+            setDefaultDates();
+            renderRooms(rooms);
+            
+            // 添加事件监听
+            searchRoomsBtn.addEventListener('click', searchRooms);
+            clearBookingBtn.addEventListener('click', clearBooking);
+            bookBtn.addEventListener('click', openGuestInfoModal);
+            closeGuestInfoBtn.addEventListener('click', closeGuestInfoModal);
+            cancelGuestInfoBtn.addEventListener('click', closeGuestInfoModal);
+            guestInfoForm.addEventListener('submit', handleGuestInfoSubmit);
+            closePaymentBtn.addEventListener('click', closePaymentModal);
+            cancelPaymentBtn.addEventListener('click', closePaymentModal);
+            confirmPaymentBtn.addEventListener('click', confirmPayment);
+            closeReceiptBtn.addEventListener('click', closeReceiptModal);
+            membershipCheckbox.addEventListener('change', updateBookingInfo);
+            
+            // 日期变更事件
+            checkinDateInput.addEventListener('change', updateBookingInfo);
+            checkoutDateInput.addEventListener('change', updateBookingInfo);
+        }
+
+        // 渲染房间列表
+        function renderRooms(roomsList) {
+            roomsContainer.innerHTML = '';
+            
+            if (roomsList.length === 0) {
+                roomsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fa fa-search text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-xl text-gray-500">暂无可用房间</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            roomsList.forEach(room => {
+                const roomCard = document.createElement('div');
+                roomCard.className = 'room-card';
+                
+                // 状态标签样式
+                let statusClass = 'available';
+                if (room.status === 'booked') {
+                    statusClass = 'booked';
+                } else if (room.status === 'processing') {
+                    statusClass = 'processing';
+                }
+                
+                // 计算折扣百分比
+                const discountPercent = Math.round((1 - room.price / room.originalPrice) * 100);
+                
+                roomCard.innerHTML = `
+                    <div class="relative">
+                        <span class="room-badge ${statusClass} absolute top-2 left-2">
+                            ${room.status === 'available' ? '可预订' : room.status === 'booked' ? '已预订' : '处理中'}
+                        </span>
+                        <img src="${room.image}" alt="${room.name}" class="w-full h-48 object-cover mb-3">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-xl mb-2">${room.name}</h3>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                <i class="fa fa-user-o mr-1"></i> ${room.capacity}人
+                            </span>
+                            <span class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                <i class="fa fa-arrows-alt mr-1"></i> ${room.size}㎡
+                            </span>
+                            <span class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                <i class="fa fa-bed mr-1"></i> ${room.bed}
+                            </span>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-gray-600 text-sm mb-1">设施：${room.amenities.join('，')}</p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="flex items-end">
+                                    <span class="text-gray-500">¥</span>
+                                    <span class="text-primary font-bold text-2xl">${room.price}</span>
+                                    <span class="text-gray-500">/晚</span>
+                                </div>
+                                <div class="text-sm text-gray-500 line-through">¥${room.originalPrice}/晚</div>
+                                <div class="text-xs text-green-600">节省${discountPercent}%</div>
+                            </div>
+                            <button class="btn-primary book-room ${room.status !== 'available' ? 'opacity-50 cursor-not-allowed' : ''}" 
+                                    data-id="${room.id}" ${room.status !== 'available' ? 'disabled' : ''}>
+                                <i class="fa fa-calendar-check-o mr-1"></i> 立即预订
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                roomsContainer.appendChild(roomCard);
+            });
+            
+            // 添加预订按钮事件监听
+            document.querySelectorAll('.book-room').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const roomId = parseInt(btn.dataset.id);
+                    selectRoom(roomId);
+                });
+            });
+        }
+
+        // 搜索房间
+        function searchRooms() {
+            const checkinDate = new Date(checkinDateInput.value);
+            const checkoutDate = new Date(checkoutDateInput.value);
+            
+            // 验证日期
+            if (checkinDate >= checkoutDate) {
+                alert('退房日期必须晚于入住日期');
+                return;
+            }
+            
+            // 这里只是模拟搜索，实际应用中应该从服务器获取可用房间
+            // 模拟部分房间已被预订
+            const availableRooms = rooms.map(room => {
+                const newRoom = {...room};
+                // 随机设置一些房间为已预订
+                newRoom.status = Math.random() > 0.7 ? 'booked' : 'available';
+                return newRoom;
+            });
+            
+            renderRooms(availableRooms);
+            updateBookingInfo();
+        }
+
+        // 选择房间
+        function selectRoom(roomId) {
+            const room = rooms.find(r => r.id === roomId);
+            if (!room) return;
+            
+            currentBooking.roomId = roomId;
+            
+            // 更新预订信息
+            updateBookingInfo();
+            
+            // 滚动到预订信息区域
+            document.querySelector('.sticky').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 更新预订信息
+        function updateBookingInfo() {
+            const checkinDate = new Date(checkinDateInput.value);
+            const checkoutDate = new Date(checkoutDateInput.value);
+            
+            // 计算入住天数
+            const timeDiff = checkoutDate.getTime() - checkinDate.getTime();
+            const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            currentBooking.checkinDate = checkinDate;
+            currentBooking.checkoutDate = checkoutDate;
+            currentBooking.days = days;
+            
+            // 更新UI
+            bookingCheckinElement.textContent = checkinDate.toLocaleDateString();
+            bookingCheckoutElement.textContent = checkoutDate.toLocaleDateString();
+            bookingDaysElement.textContent = `${days}晚`;
+            
+            if (currentBooking.roomId) {
+                const room = rooms.find(r => r.id === currentBooking.roomId);
+                if (room) {
+                    bookingRoomTypeElement.textContent = room.name;
+                    bookingOriginalPriceElement.textContent = `¥${room.originalPrice.toFixed(2)}/晚`;
+                    bookingPriceElement.textContent = `¥${room.price.toFixed(2)}/晚`;
+                    
+                    // 计算价格
+                    const subtotal = room.price * days;
+                    const { membershipDiscount, stayDiscount } = calculateDiscount(subtotal);
+                    const total = subtotal - membershipDiscount - stayDiscount;
+                    
+                    currentBooking.totalPrice = subtotal;
+                    currentBooking.membershipDiscount = membershipDiscount;
+                    currentBooking.stayDiscount = stayDiscount;
+                    
+                    subtotalElement.textContent = `¥${subtotal.toFixed(2)}`;
+                    discountElement.textContent = `¥${(membershipDiscount + stayDiscount).toFixed(2)}`;
+                    totalElement.textContent = `¥${total.toFixed(2)}`;
+                    
+                    bookBtn.disabled = false;
+                }
+            } else {
+                bookingRoomTypeElement.textContent = '未选择';
+                bookingOriginalPriceElement.textContent = '¥0.00/晚';
+                bookingPriceElement.textContent = '¥0.00/晚';
+                subtotalElement.textContent = '¥0.00';
+                discountElement.textContent = '¥0.00';
+                totalElement.textContent = '¥0.00';
+                bookBtn.disabled = true;
+            }
+        }
+
+        // 计算折扣
+        function calculateDiscount(subtotal) {
+            let membershipDiscount = 0;
+            let stayDiscount = 0;
+            
+            // 会员折扣
+            if (membershipCheckbox.checked) {
+                // 随机5-7折
+                const discountRate = 0.5 + Math.random() * 0.2;
+                membershipDiscount = subtotal * (1 - discountRate);
+                
+                // 更新支付页面的会员折扣提示
+                const discountPercent = Math.round(discountRate * 10);
+                membershipDiscountTextElement.textContent = `南呈会会员${discountPercent}折优惠`;
+            } else {
+                membershipDiscountTextElement.textContent = '';
+            }
+            
+            // 连住折扣
+            if (currentBooking.days >= 3) {
+                stayDiscount = (subtotal - membershipDiscount) * 0.05;
+            }
+            
+            return { membershipDiscount, stayDiscount };
+        }
+
+        // 清空预订
+        function clearBooking() {
+            currentBooking.roomId = null;
+            membershipCheckbox.checked = false;
+            membershipIdInput.value = '';
+            setDefaultDates();
+            updateBookingInfo();
+        }
+
+        // 打开个人信息表单
+        function openGuestInfoModal() {
+            guestInfoModal.classList.remove('hidden');
+        }
+
+        // 关闭个人信息表单
+        function closeGuestInfoModal() {
+            guestInfoModal.classList.add('hidden');
+        }
+
+        // 处理个人信息提交
+        function handleGuestInfoSubmit(e) {
+            e.preventDefault();
+            closeGuestInfoModal();
+            openPaymentModal();
+        }
+
+        // 打开支付模态框
+        function openPaymentModal() {
+            const subtotal = currentBooking.totalPrice;
+            const { membershipDiscount, stayDiscount } = calculateDiscount(subtotal);
+            const total = subtotal - membershipDiscount - stayDiscount;
+            
+            paymentAmountElement.textContent = `¥${total.toFixed(2)}`;
+            paymentModal.classList.remove('hidden');
+        }
+
+        // 关闭支付模态框
+        function closePaymentModal() {
+            paymentModal.classList.add('hidden');
+        }
+
+        // 确认支付
+        function confirmPayment() {
+            const subtotal = currentBooking.totalPrice;
+            const { membershipDiscount, stayDiscount } = calculateDiscount(subtotal);
+            const total = subtotal - membershipDiscount - stayDiscount;
+            
+            // 更新小票信息
+            receiptItemsContainer.innerHTML = '';
+            
+            const room = rooms.find(r => r.id === currentBooking.roomId);
+            if (room) {
+                const receiptItem = document.createElement('div');
+                receiptItem.className = 'receipt-item';
+                receiptItem.innerHTML = `
+                    <span>${room.name} × ${currentBooking.days}晚</span>
+                    <span>¥${subtotal.toFixed(2)}</span>
+                `;
+                receiptItemsContainer.appendChild(receiptItem);
+            }
+            
+            receiptSubtotalElement.textContent = `¥${subtotal.toFixed(2)}`;
+            receiptMembershipDiscountElement.textContent = `¥${membershipDiscount.toFixed(2)}`;
+            receiptStayDiscountElement.textContent = `¥${stayDiscount.toFixed(2)}`;
+            receiptTotalElement.textContent = `¥${total.toFixed(2)}`;
+            
+            // 设置当前时间
+            const now = new Date();
+            receiptTimeElement.textContent = now.toLocaleString();
+            
+            // 设置会员信息
+            receiptMembershipElement.textContent = membershipCheckbox.checked ? '南呈会会员' : '普通会员';
+            
+            // 生成随机订单号
+            const orderNumber = 'DH' + now.getFullYear() + 
+                              String(now.getMonth() + 1).padStart(2, '0') + 
+                              String(now.getDate()).padStart(2, '0') + 
+                              Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            orderNumberElement.textContent = orderNumber;
+            
+            // 分配随机房间号
+            const roomNumber = Math.floor(8000 + Math.random() * 1000);
+            roomNumberElement.textContent = roomNumber;
+            
+            // 设置入住和退房日期
+            receiptCheckinElement.textContent = currentBooking.checkinDate.toLocaleDateString();
+            receiptCheckoutElement.textContent = currentBooking.checkoutDate.toLocaleDateString();
+            
+            // 显示小票，隐藏支付模态框
+            receiptModal.classList.remove('hidden');
+            paymentModal.classList.add('hidden');
+            
+            // 清空预订
+            clearBooking();
+        }
+
+        // 关闭小票模态框
+        function closeReceiptModal() {
+            receiptModal.classList.add('hidden');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', initRooms);
+    </script>
+</body>
+</html>
+    
