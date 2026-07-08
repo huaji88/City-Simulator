@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城际铁路 · 双线购票系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 全局浅色主题 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+        }
+        body {
+            background: #eef2f7;
+            padding: 20px;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1360px;
+            margin: 0 auto;
+        }
+
+        /* 头部 */
+        header {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            padding: 16px 30px;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-bottom: 2px solid #d0dbe8;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .logo i {
+            font-size: 34px;
+            color: #0b3b5c;
+        }
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b3b5c;
+            letter-spacing: 1px;
+        }
+        .logo .sub {
+            font-size: 14px;
+            color: #4b6a8b;
+            font-weight: 400;
+            margin-left: 8px;
+        }
+        .datetime {
+            text-align: right;
+            font-size: 15px;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .datetime #current-date {
+            font-weight: 500;
+            color: #475569;
+        }
+        .datetime #current-time {
+            font-weight: 600;
+            color: #0b3b5c;
+            font-size: 18px;
+        }
+
+        /* 主体 */
+        .main-content {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* 线路图 */
+        .map-section {
+            flex: 2;
+            min-width: 0;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 20px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+        }
+        .map-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .map-title h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0b3b5c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .map-title h2 i {
+            color: #d97706;
+        }
+        .map-title .stats {
+            display: flex;
+            gap: 18px;
+            font-size: 14px;
+            color: #334155;
+            background: #f1f5f9;
+            padding: 6px 16px;
+            border-radius: 24px;
+        }
+        .map-title .stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .map-title .stats i {
+            color: #d97706;
+        }
+
+        .route-svg-wrapper {
+            width: 100%;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px 0 5px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid #e2e8f0;
+        }
+        .route-svg-wrapper svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            min-height: 280px;
+            max-height: 420px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #334155;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-item .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .legend-item .dot.nanhui { background: #2563eb; }
+        .legend-item .dot.jiamin { background: #16a34a; }
+        .legend-item .dot.transfer { background: #d97706; box-shadow: 0 0 8px rgba(217,119,6,0.4); }
+
+        /* 购票面板 */
+        .ticket-section {
+            flex: 1.1;
+            min-width: 320px;
+            max-width: 440px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 22px 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        .ticket-section .ticket-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #0b3b5c;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .ticket-section .ticket-title i {
+            color: #d97706;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .form-group label i {
+            color: #d97706;
+            width: 18px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #d1d9e6;
+            border-radius: 10px;
+            font-size: 15px;
+            background: #f8fafc;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230b3b5c' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+        }
+        .form-group select:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
+            background-color: #ffffff;
+        }
+        .form-group select option {
+            background: #ffffff;
+            color: #1e293b;
+            padding: 8px;
+        }
+        .form-group select optgroup {
+            background: #f1f5f9;
+            color: #0b3b5c;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-calculate {
+            background: #d97706;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(217,119,6,0.25);
+        }
+        .btn-calculate:hover {
+            background: #b45309;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(217,119,6,0.3);
+        }
+        .btn-pay {
+            background: #2563eb;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        }
+        .btn-pay:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+        }
+        .btn-pay:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-display {
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin: 18px 0 16px;
+            border-left: 4px solid #d97706;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-item .info-label {
+            font-weight: 500;
+            color: #475569;
+        }
+        .info-item .info-value {
+            font-weight: 700;
+            color: #0b3b5c;
+        }
+        .info-item .info-value.price {
+            color: #d97706;
+            font-size: 22px;
+        }
+
+        .transfer-path {
+            background: #fef9e7;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 12px 0 10px;
+            border: 1px solid #fde68a;
+            display: none;
+            font-size: 14px;
+        }
+        .transfer-path.show {
+            display: block;
+        }
+        .transfer-path .path-label {
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .transfer-path .path-label i {
+            color: #d97706;
+        }
+        .transfer-path .path-steps {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 10px;
+            color: #1e293b;
+        }
+        .transfer-path .path-steps .step-station {
+            font-weight: 600;
+            color: #0b3b5c;
+        }
+        .transfer-path .path-steps .step-line {
+            font-size: 12px;
+            padding: 2px 12px;
+            border-radius: 12px;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .transfer-path .path-steps .step-line.jiamin {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .transfer-path .path-steps .step-arrow {
+            color: #d97706;
+            font-weight: 700;
+        }
+        .transfer-path .path-steps .step-transfer {
+            background: #fde68a;
+            color: #92400e;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* 购票结果 */
+        .ticket-result {
+            background: #f0fdf4;
+            border-radius: 10px;
+            padding: 18px 16px 16px;
+            margin-top: 18px;
+            border: 2px solid #86efac;
+            display: none;
+            animation: fadeSlideUp 0.4s ease;
+        }
+        .ticket-result.show {
+            display: block;
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ticket-result h3 {
+            color: #15803d;
+            font-size: 20px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ticket-result h3 i {
+            color: #d97706;
+        }
+        .ticket-result .sub-msg {
+            color: #475569;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .ticket-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+            margin: 14px 0;
+        }
+        .ticket-info-grid .ticket-item {
+            background: #ffffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .ticket-info-grid .ticket-item strong {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .ticket-info-grid .ticket-item span {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0b3b5c;
+        }
+        .ticket-info-grid .ticket-item .highlight {
+            color: #d97706;
+        }
+        .ticket-result .footer-note {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+        }
+
+        /* 支付弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.25s ease;
+        }
+        .modal.show { display: flex; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 92%;
+            max-width: 460px;
+            padding: 32px 28px 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close-modal {
+            position: absolute;
+            top: 14px; right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        .close-modal:hover { color: #1e293b; }
+
+        .modal-title {
+            text-align: center;
+            color: #0b3b5c;
+            font-size: 22px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .modal-title i { color: #d97706; }
+
+        .payment-info {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin: 16px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .payment-item:last-child { border-bottom: none; }
+        .payment-item .payment-label {
+            color: #475569;
+            font-weight: 500;
+        }
+        .payment-item .payment-value {
+            font-weight: 700;
+            color: #0b3b5c;
+        }
+        .payment-item .original-price {
+            color: #94a3b8;
+            text-decoration: line-through;
+            font-weight: 400;
+        }
+        .payment-item .discount-price {
+            color: #d97706;
+            font-size: 24px;
+        }
+        .discount-tag {
+            background: #fde68a;
+            color: #92400e;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 12px;
+            margin: 18px 0;
+        }
+        .payment-method {
+            flex: 1;
+            padding: 14px 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: #f8fafc;
+            color: #475569;
+        }
+        .payment-method:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .payment-method.active {
+            border-color: #2563eb;
+            background: #dbeafe;
+            color: #1e293b;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+        }
+        .payment-method i {
+            font-size: 30px;
+            display: block;
+            margin-bottom: 6px;
+            color: #2563eb;
+        }
+        .payment-method .method-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .btn-confirm {
+            background: #2563eb;
+            color: #fff;
+            margin-top: 8px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        }
+        .btn-confirm:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        /* 底部 */
+        footer {
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            color: #475569;
+            text-align: center;
+            padding: 14px 20px;
+            border-radius: 0 0 16px 16px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+        }
+        footer .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        footer .footer-left i {
+            color: #d97706;
+        }
+        footer .footer-right {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        footer .footer-right .badge {
+            background: #f1f5f9;
+            padding: 2px 14px;
+            border-radius: 16px;
+            color: #0b3b5c;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .main-content { flex-direction: column; }
+            .ticket-section { max-width: 100%; min-width: 0; }
+            .route-svg-wrapper svg { min-height: 240px; max-height: 340px; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            header { flex-direction: column; align-items: flex-start; padding: 12px 16px; }
+            .datetime { text-align: left; width: 100%; }
+            .logo h1 { font-size: 20px; }
+            .map-title { flex-direction: column; align-items: flex-start; }
+            .ticket-section { padding: 18px 14px; }
+            .ticket-info-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .payment-methods { flex-direction: column; gap: 8px; }
+            footer { flex-direction: column; text-align: center; gap: 6px; }
+            footer .footer-left, footer .footer-right { justify-content: center; }
+            .modal-content { padding: 24px 16px 20px; }
+            .route-svg-wrapper svg { min-height: 200px; max-height: 280px; }
+        }
+        ::-webkit-scrollbar { height: 6px; width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">
+            <i class="fas fa-train-subway"></i>
+            <h1>城际铁路 <span class="sub">· 双线通</span></h1>
+        </div>
+        <div class="datetime">
+            <div id="current-date">2026年7月8日</div>
+            <div id="current-time">星期三 10:30:15</div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <!-- 线路图 -->
+        <div class="map-section">
+            <div class="map-title">
+                <h2><i class="fas fa-route"></i> 线路图</h2>
+                <div class="stats">
+                    <span><i class="fas fa-circle" style="color:#2563eb;"></i> 南汇线 79元</span>
+                    <span><i class="fas fa-circle" style="color:#16a34a;"></i> 嘉闵线 59元</span>
+                    <span><i class="fas fa-exchange-alt" style="color:#d97706;"></i> 花卉世界站 · 换乘</span>
+                </div>
+            </div>
+
+            <div class="route-svg-wrapper">
+                <svg viewBox="0 0 1100 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <filter id="glow"><feGaussianBlur stdDeviation="3"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-strong"><feGaussianBlur stdDeviation="6"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    </defs>
+                    <!-- 南汇线 -->
+                    <line x1="40" y1="100" x2="1060" y2="100" stroke="#2563eb" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+                    <line x1="40" y1="100" x2="1060" y2="100" stroke="#2563eb" stroke-width="10" stroke-linecap="round" opacity="0.12"/>
+                    <!-- 南汇站 -->
+                    <circle cx="40" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="40" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">西京站</text><text x="40" y="146" text-anchor="middle" fill="#64748b" font-size="10">0km</text>
+                    <circle cx="145" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="145" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">西京机场站</text><text x="145" y="146" text-anchor="middle" fill="#64748b" font-size="10">23km</text>
+                    <circle cx="210" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="210" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">西京航空港站</text><text x="210" y="146" text-anchor="middle" fill="#64748b" font-size="10">32km</text>
+                    <circle cx="350" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="350" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">银山卫站</text><text x="350" y="146" text-anchor="middle" fill="#64748b" font-size="10">68km</text>
+                    <circle cx="520" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="520" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">凌兆站</text><text x="520" y="146" text-anchor="middle" fill="#64748b" font-size="10">118km</text>
+                    <circle cx="640" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="640" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">闵行东站</text><text x="640" y="146" text-anchor="middle" fill="#64748b" font-size="10">145km</text>
+                    <circle cx="780" cy="100" r="9" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="780" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">西京东站</text><text x="780" y="146" text-anchor="middle" fill="#64748b" font-size="10">189km</text>
+                    <circle cx="940" cy="100" r="14" fill="#d97706" stroke="#fff" stroke-width="3" filter="url(#glow-strong)"/>
+                    <text x="940" y="82" text-anchor="middle" fill="#d97706" font-size="11" font-weight="700">换乘</text>
+                    <text x="940" y="130" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="700">花卉世界站</text><text x="940" y="146" text-anchor="middle" fill="#64748b" font-size="10">286km</text>
+
+                    <!-- 嘉闵线 -->
+                    <line x1="40" y1="210" x2="1060" y2="210" stroke="#16a34a" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+                    <line x1="40" y1="210" x2="1060" y2="210" stroke="#16a34a" stroke-width="10" stroke-linecap="round" opacity="0.10"/>
+                    <circle cx="40" cy="210" r="9" fill="#fff" stroke="#16a34a" stroke-width="3"/>
+                    <text x="40" y="240" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">西京松山站</text><text x="40" y="256" text-anchor="middle" fill="#64748b" font-size="10">0km</text>
+                    <circle cx="155" cy="210" r="9" fill="#fff" stroke="#16a34a" stroke-width="3"/>
+                    <text x="155" y="240" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">红谷站</text><text x="155" y="256" text-anchor="middle" fill="#64748b" font-size="10">15km</text>
+                    <circle cx="270" cy="210" r="9" fill="#fff" stroke="#16a34a" stroke-width="3"/>
+                    <text x="270" y="240" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">人才新城站</text><text x="270" y="256" text-anchor="middle" fill="#64748b" font-size="10">28km</text>
+                    <circle cx="470" cy="210" r="9" fill="#fff" stroke="#16a34a" stroke-width="3"/>
+                    <text x="470" y="240" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">鸿蒙站</text><text x="470" y="256" text-anchor="middle" fill="#64748b" font-size="10">66km</text>
+                    <circle cx="760" cy="210" r="14" fill="#d97706" stroke="#fff" stroke-width="3" filter="url(#glow-strong)"/>
+                    <text x="760" y="192" text-anchor="middle" fill="#d97706" font-size="11" font-weight="700">换乘</text>
+                    <text x="760" y="240" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="700">花卉世界站</text><text x="760" y="256" text-anchor="middle" fill="#64748b" font-size="10">133km</text>
+                    <circle cx="940" cy="210" r="9" fill="#fff" stroke="#16a34a" stroke-width="3"/>
+                    <text x="940" y="240" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="600">林岳站</text><text x="940" y="256" text-anchor="middle" fill="#64748b" font-size="10">169km</text>
+
+                    <!-- 换乘连接 -->
+                    <line x1="940" y1="114" x2="760" y2="196" stroke="#d97706" stroke-width="3" stroke-dasharray="6,5" opacity="0.5"/>
+                    <circle cx="850" cy="155" r="18" fill="rgba(217,119,6,0.08)" stroke="#d97706" stroke-width="2" stroke-dasharray="4,3"/>
+                    <text x="850" y="161" text-anchor="middle" fill="#d97706" font-size="16" font-weight="700">⇄</text>
+
+                    <text x="20" y="96" fill="#2563eb" font-size="14" font-weight="700">南汇线</text>
+                    <text x="20" y="206" fill="#16a34a" font-size="14" font-weight="700">嘉闵线</text>
+                </svg>
+            </div>
+
+            <div class="legend">
+                <span class="legend-item"><span class="dot nanhui"></span> 南汇线</span>
+                <span class="legend-item"><span class="dot jiamin"></span> 嘉闵线</span>
+                <span class="legend-item"><span class="dot transfer"></span> 换乘站 · 花卉世界</span>
+                <span class="legend-item"><i class="fas fa-arrow-right" style="color:#d97706;"></i> 可跨线换乘</span>
+            </div>
+        </div>
+
+        <!-- 购票面板 -->
+        <div class="ticket-section">
+            <div class="ticket-title">
+                <i class="fas fa-ticket-alt"></i> 车票预订
+            </div>
+
+            <div class="form-group">
+                <label for="departure"><i class="fas fa-play"></i> 出发站</label>
+                <select id="departure">
+                    <option value="">— 请选择 —</option>
+                    <optgroup label="南汇线">
+                        <option value="西京站|nanhui|0">西京站 (0km)</option>
+                        <option value="西京机场站|nanhui|23">西京机场站 (23km)</option>
+                        <option value="西京航空港站|nanhui|32">西京航空港站 (32km)</option>
+                        <option value="银山卫站|nanhui|68">银山卫站 (68km)</option>
+                        <option value="凌兆站|nanhui|118">凌兆站 (118km)</option>
+                        <option value="闵行东站|nanhui|145">闵行东站 (145km)</option>
+                        <option value="西京东站|nanhui|189">西京东站 (189km)</option>
+                        <option value="花卉世界站|nanhui|286">🌸 花卉世界站 (286km)</option>
+                    </optgroup>
+                    <optgroup label="嘉闵线">
+                        <option value="西京松山站|jiamin|0">西京松山站 (0km)</option>
+                        <option value="红谷站|jiamin|15">红谷站 (15km)</option>
+                        <option value="人才新城站|jiamin|28">人才新城站 (28km)</option>
+                        <option value="鸿蒙站|jiamin|66">鸿蒙站 (66km)</option>
+                        <option value="花卉世界站|jiamin|133">🌸 花卉世界站 (133km)</option>
+                        <option value="林岳站|jiamin|169">林岳站 (169km)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="arrival"><i class="fas fa-stop"></i> 到达站</label>
+                <select id="arrival">
+                    <option value="">— 请选择 —</option>
+                    <optgroup label="南汇线">
+                        <option value="西京站|nanhui|0">西京站 (0km)</option>
+                        <option value="西京机场站|nanhui|23">西京机场站 (23km)</option>
+                        <option value="西京航空港站|nanhui|32">西京航空港站 (32km)</option>
+                        <option value="银山卫站|nanhui|68">银山卫站 (68km)</option>
+                        <option value="凌兆站|nanhui|118">凌兆站 (118km)</option>
+                        <option value="闵行东站|nanhui|145">闵行东站 (145km)</option>
+                        <option value="西京东站|nanhui|189">西京东站 (189km)</option>
+                        <option value="花卉世界站|nanhui|286">🌸 花卉世界站 (286km)</option>
+                    </optgroup>
+                    <optgroup label="嘉闵线">
+                        <option value="西京松山站|jiamin|0">西京松山站 (0km)</option>
+                        <option value="红谷站|jiamin|15">红谷站 (15km)</option>
+                        <option value="人才新城站|jiamin|28">人才新城站 (28km)</option>
+                        <option value="鸿蒙站|jiamin|66">鸿蒙站 (66km)</option>
+                        <option value="花卉世界站|jiamin|133">🌸 花卉世界站 (133km)</option>
+                        <option value="林岳站|jiamin|169">林岳站 (169km)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-calculate" id="calculate-btn">
+                    <i class="fas fa-calculator"></i> 计算票价与路径
+                </button>
+            </div>
+
+            <div class="info-display">
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-tag"></i> 票价</span>
+                    <span class="info-value price" id="price">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-ruler"></i> 距离</span>
+                    <span class="info-value" id="distance">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-clock"></i> 预计耗时</span>
+                    <span class="info-value" id="duration">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-route"></i> 乘坐方案</span>
+                    <span class="info-value" id="route-plan" style="font-size:14px;font-weight:500;">—</span>
+                </div>
+            </div>
+
+            <div class="transfer-path" id="transfer-path">
+                <div class="path-label"><i class="fas fa-sitemap"></i> 换乘路径详情</div>
+                <div class="path-steps" id="path-steps"></div>
+            </div>
+
+            <button class="btn btn-pay" id="pay-btn" disabled>
+                <i class="fas fa-credit-card"></i> 立即支付
+            </button>
+
+            <div class="ticket-result" id="ticket-result">
+                <h3><i class="fas fa-check-circle"></i> 购票成功！</h3>
+                <div class="sub-msg">感谢使用城际铁路 · 请凭身份证取票</div>
+                <div class="ticket-info-grid">
+                    <div class="ticket-item"><strong>车次</strong><span id="train-number">S----</span></div>
+                    <div class="ticket-item"><strong>出发时间</strong><span id="departure-time">--:--</span></div>
+                    <div class="ticket-item"><strong>出发站</strong><span id="ticket-from">--</span></div>
+                    <div class="ticket-item"><strong>到达站</strong><span id="ticket-to">--</span></div>
+                    <div class="ticket-item"><strong>票价</strong><span class="highlight" id="ticket-price">--</span></div>
+                    <div class="ticket-item"><strong>预计耗时</strong><span id="ticket-duration">--</span></div>
+                </div>
+                <div class="footer-note"><i class="fas fa-id-card"></i> 请凭身份证在车站自助取票机取票</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-left">
+            <span><i class="fas fa-train"></i> 城际铁路双线通</span>
+            <span>南汇线 全程79元</span>
+            <span>嘉闵线 全程59元</span>
+        </div>
+        <div class="footer-right">
+            <span class="badge"><i class="fas fa-exchange-alt"></i> 花卉世界站换乘</span>
+            <span>服务热线 12306</span>
+            <span>© 2026</span>
+        </div>
+    </footer>
+</div>
+
+<!-- 支付弹窗 -->
+<div class="modal" id="payment-modal">
+    <div class="modal-content">
+        <span class="close-modal" id="close-modal">&times;</span>
+        <div class="modal-title"><i class="fas fa-wallet"></i> 支付确认</div>
+        <div class="payment-info">
+            <div class="payment-item">
+                <span class="payment-label">车票信息</span>
+                <span class="payment-value" id="payment-route">—</span>
+            </div>
+            <div class="payment-item">
+                <span class="payment-label">原价</span>
+                <span class="payment-value original-price" id="original-price">—</span>
+            </div>
+            <div class="payment-item">
+                <span class="payment-label">折扣</span>
+                <span class="payment-value" id="discount-rate">—</span>
+            </div>
+            <div class="payment-item">
+                <span class="payment-label">应付金额</span>
+                <span class="payment-value discount-price" id="final-price">—</span>
+            </div>
+        </div>
+        <div style="color:#475569;font-size:14px;font-weight:500;margin-bottom:12px;">选择支付方式</div>
+        <div class="payment-methods">
+            <div class="payment-method active" data-method="alipay">
+                <i class="fab fa-alipay"></i>
+                <div class="method-name">支付宝</div>
+            </div>
+            <div class="payment-method" data-method="wechat">
+                <i class="fab fa-weixin"></i>
+                <div class="method-name">微信支付</div>
+            </div>
+            <div class="payment-method" data-method="bank">
+                <i class="fas fa-credit-card"></i>
+                <div class="method-name">银行卡</div>
+            </div>
+        </div>
+        <button class="btn-confirm" id="confirm-pay">
+            <i class="fas fa-check-circle"></i> 确认支付
+        </button>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  数据定义
+    // ============================================================
+    const LINES = {
+        nanhui: {
+            name: '南汇线',
+            color: '#2563eb',
+            fullPrice: 79,
+            fullDist: 286,
+            stations: [
+                { name: '西京站', dist: 0 },
+                { name: '西京机场站', dist: 23 },
+                { name: '西京航空港站', dist: 32 },
+                { name: '银山卫站', dist: 68 },
+                { name: '凌兆站', dist: 118 },
+                { name: '闵行东站', dist: 145 },
+                { name: '西京东站', dist: 189 },
+                { name: '花卉世界站', dist: 286, transfer: true }
+            ]
+        },
+        jiamin: {
+            name: '嘉闵线',
+            color: '#16a34a',
+            fullPrice: 59,
+            fullDist: 169,
+            stations: [
+                { name: '西京松山站', dist: 0 },
+                { name: '红谷站', dist: 15 },
+                { name: '人才新城站', dist: 28 },
+                { name: '鸿蒙站', dist: 66 },
+                { name: '花卉世界站', dist: 133, transfer: true },
+                { name: '林岳站', dist: 169 }
+            ]
+        }
+    };
+
+    const TRANSFER_NAME = '花卉世界站';
+
+    // ============================================================
+    //  工具函数
+    // ============================================================
+    function getStationInfo(name, lineKey) {
+        // 如果指定了线路，从该线路查找
+        if (lineKey && LINES[lineKey]) {
+            const found = LINES[lineKey].stations.find(s => s.name === name);
+            if (found) return { ...found, line: lineKey, lineName: LINES[lineKey].name };
+        }
+        // 否则尝试所有线路
+        for (const [lk, line] of Object.entries(LINES)) {
+            const found = line.stations.find(s => s.name === name);
+            if (found) return { ...found, line: lk, lineName: line.name };
+        }
+        return null;
+    }
+
+    function getLineStations(lineKey) {
+        return LINES[lineKey]?.stations || [];
+    }
+
+    // 计算同线路票价（给定站名和线路）
+    function calcSameLine(departure, arrival, lineKey) {
+        const d = getStationInfo(departure, lineKey);
+        const a = getStationInfo(arrival, lineKey);
+        if (!d || !a || d.line !== a.line) return null;
+        const line = LINES[d.line];
+        const dist = Math.abs(a.dist - d.dist);
+        const price = (dist / line.fullDist) * line.fullPrice;
+        return {
+            price: Math.round(price),
+            distance: dist,
+            line: d.line,
+            lineName: line.name
+        };
+    }
+
+    // 跨线计算：经花卉世界站换乘
+    function calcTransfer(departure, arrival) {
+        const dInfo = getStationInfo(departure);
+        const aInfo = getStationInfo(arrival);
+        if (!dInfo || !aInfo) return null;
+        if (dInfo.line === aInfo.line) return null; // 同线不跨线
+
+        // 如果出发或到达是花卉世界，则简化：只计算从花卉世界到另一站所在线路的票价
+        if (departure === TRANSFER_NAME || arrival === TRANSFER_NAME) {
+            // 如果出发是花卉世界，则使用到达的线路
+            if (departure === TRANSFER_NAME) {
+                const result = calcSameLine(TRANSFER_NAME, arrival, aInfo.line);
+                if (result) {
+                    return {
+                        price: result.price,
+                        distance: result.distance,
+                        line: result.line,
+                        lineName: result.lineName,
+                        isDirect: true,
+                        seg1: null,
+                        seg2: result
+                    };
+                }
+            } else if (arrival === TRANSFER_NAME) {
+                const result = calcSameLine(departure, TRANSFER_NAME, dInfo.line);
+                if (result) {
+                    return {
+                        price: result.price,
+                        distance: result.distance,
+                        line: result.line,
+                        lineName: result.lineName,
+                        isDirect: true,
+                        seg1: result,
+                        seg2: null
+                    };
+                }
+            }
+            return null;
+        }
+
+        // 常规跨线：出发和到达都不是花卉世界，必须经过换乘站
+        const seg1 = calcSameLine(departure, TRANSFER_NAME, dInfo.line);
+        const seg2 = calcSameLine(TRANSFER_NAME, arrival, aInfo.line);
+        if (!seg1 || !seg2) return null;
+
+        return {
+            price: seg1.price + seg2.price,
+            distance: seg1.distance + seg2.distance,
+            line1: seg1.line,
+            line2: seg2.line,
+            lineName1: seg1.lineName,
+            lineName2: seg2.lineName,
+            isDirect: false,
+            seg1,
+            seg2
+        };
+    }
+
+    // 计算耗时
+    function calcDuration(dist) {
+        const avgSpeed = 90;
+        let minutes = Math.round((dist / avgSpeed) * 60);
+        const offset = Math.floor(Math.random() * 31) - 15;
+        minutes = Math.max(25, minutes + offset);
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
+    }
+
+    function genTrainNumber() {
+        const prefix = ['S', 'G', 'D', 'C'][Math.floor(Math.random() * 4)];
+        return prefix + String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    // ============================================================
+    //  DOM 引用
+    // ============================================================
+    const depSelect = document.getElementById('departure');
+    const arrSelect = document.getElementById('arrival');
+    const calcBtn = document.getElementById('calculate-btn');
+    const payBtn = document.getElementById('pay-btn');
+
+    const priceDisp = document.getElementById('price');
+    const distDisp = document.getElementById('distance');
+    const durDisp = document.getElementById('duration');
+    const routeDisp = document.getElementById('route-plan');
+
+    const transferPathDiv = document.getElementById('transfer-path');
+    const pathStepsDiv = document.getElementById('path-steps');
+
+    const ticketResult = document.getElementById('ticket-result');
+
+    const modal = document.getElementById('payment-modal');
+    const closeModal = document.getElementById('close-modal');
+    const confirmPay = document.getElementById('confirm-pay');
+
+    let currentTicket = {
+        departure: '', arrival: '', distance: 0, price: 0, duration: '',
+        routePlan: '', isTransfer: false, transferInfo: null
+    };
+
+    // ============================================================
+    //  核心计算
+    // ============================================================
+    function calculateTicket() {
+        const depVal = depSelect.value;
+        const arrVal = arrSelect.value;
+        if (!depVal || !arrVal) { alert('请选择出发站和到达站'); return; }
+        if (depVal === arrVal) { alert('出发站和到达站不能相同'); return; }
+
+        const [depName, depLine, depDist] = depVal.split('|');
+        const [arrName, arrLine, arrDist] = arrVal.split('|');
+
+        let result = null;
+        let isTransfer = false;
+        let transferInfo = null;
+        let routePlan = '';
+
+        // 判断是否同线路
+        if (depLine === arrLine) {
+            result = calcSameLine(depName, arrName, depLine);
+            if (result) {
+                isTransfer = false;
+                routePlan = `${depName} → (${result.lineName}) → ${arrName} 直达`;
+            }
+        } else {
+            // 跨线
+            const trans = calcTransfer(depName, arrName);
+            if (trans) {
+                result = { price: trans.price, distance: trans.distance, line: trans.line || trans.line1 };
+                isTransfer = true;
+                transferInfo = trans;
+                if (trans.isDirect) {
+                    // 出发或到达是花卉世界，简化为单线
+                    routePlan = `${depName} → (${trans.lineName}) → ${arrName} 直达(经换乘站)`;
+                } else {
+                    const seg1 = trans.seg1;
+                    const seg2 = trans.seg2;
+                    routePlan =
+                        `${depName} → (${seg1.lineName}) → ${TRANSFER_NAME} 换乘 → (${seg2.lineName}) → ${arrName}`;
+                }
+            }
+        }
+
+        if (!result) {
+            alert('无法计算票价，请确认车站信息（可能无法换乘）');
+            return;
+        }
+
+        const dist = result.distance;
+        const price = result.price;
+        const duration = calcDuration(dist);
+
+        priceDisp.textContent = `${price}元`;
+        distDisp.textContent = `${dist}公里`;
+        durDisp.textContent = duration;
+        routeDisp.textContent = routePlan;
+
+        currentTicket = {
+            departure: depName, arrival: arrName,
+            distance: dist, price, duration,
+            routePlan, isTransfer, transferInfo,
+            depLine, arrLine
+        };
+
+        // 更新换乘路径详情
+        if (isTransfer && transferInfo && !transferInfo.isDirect) {
+            transferPathDiv.classList.add('show');
+            const s1 = transferInfo.seg1;
+            const s2 = transferInfo.seg2;
+            pathStepsDiv.innerHTML = `
+                <span class="step-station">${depName}</span>
+                <span class="step-line">${s1.lineName}</span>
+                <span class="step-arrow">→</span>
+                <span class="step-station" style="color:#d97706;">${TRANSFER_NAME}</span>
+                <span class="step-transfer"><i class="fas fa-exchange-alt"></i> 换乘</span>
+                <span class="step-line jiamin">${s2.lineName}</span>
+                <span class="step-arrow">→</span>
+                <span class="step-station">${arrName}</span>
+                <span style="font-size:12px;color:#64748b;margin-left:6px;">
+                    (${s1.distance}km + ${s2.distance}km)
+                </span>
+            `;
+        } else if (isTransfer && transferInfo && transferInfo.isDirect) {
+            transferPathDiv.classList.add('show');
+            const seg = transferInfo.seg1 || transferInfo.seg2;
+            pathStepsDiv.innerHTML = `
+                <span class="step-station">${depName}</span>
+                <span class="step-line">${seg.lineName}</span>
+                <span class="step-arrow">→</span>
+                <span class="step-station">${arrName}</span>
+                <span style="font-size:12px;color:#64748b;margin-left:6px;">
+                    (途经换乘站 ${TRANSFER_NAME})
+                </span>
+            `;
+        } else {
+            transferPathDiv.classList.remove('show');
+            // 同线显示简单路径
+            transferPathDiv.classList.add('show');
+            const lineName = result.lineName || LINES[result.line]?.name || result.line;
+            pathStepsDiv.innerHTML = `
+                <span class="step-station">${depName}</span>
+                <span class="step-line">${lineName}</span>
+                <span class="step-arrow">→</span>
+                <span class="step-station">${arrName}</span>
+                <span style="font-size:12px;color:#64748b;margin-left:6px;">
+                    (${dist}km 直达)
+                </span>
+            `;
+        }
+
+        payBtn.disabled = false;
+        ticketResult.classList.remove('show');
+    }
+
+    // ============================================================
+    //  支付弹窗
+    // ============================================================
+    function openPaymentModal() {
+        if (!currentTicket.departure) return;
+        const discount = Math.random() * 0.15 + 0.85;
+        const finalPrice = Math.round(currentTicket.price * discount);
+        document.getElementById('payment-route').textContent =
+            `${currentTicket.departure} → ${currentTicket.arrival}`;
+        document.getElementById('original-price').textContent = `${currentTicket.price}元`;
+        document.getElementById('discount-rate').innerHTML =
+            `${(discount * 10).toFixed(1)}折 <span class="discount-tag">限时优惠</span>`;
+        document.getElementById('final-price').textContent = `${finalPrice}元`;
+
+        currentTicket.discount = discount;
+        currentTicket.finalPrice = finalPrice;
+
+        document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
+        document.querySelector('.payment-method[data-method="alipay"]')?.classList.add('active');
+
+        modal.classList.add('show');
+    }
+
+    function processPayment() {
+        const finalPrice = currentTicket.finalPrice || currentTicket.price;
+        const trainNum = genTrainNumber();
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + Math.floor(Math.random() * 51) + 10);
+        const timeStr =
+            `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        document.getElementById('train-number').textContent = trainNum;
+        document.getElementById('departure-time').textContent = timeStr;
+        document.getElementById('ticket-from').textContent = currentTicket.departure;
+        document.getElementById('ticket-to').textContent = currentTicket.arrival;
+        document.getElementById('ticket-price').textContent = `${finalPrice}元`;
+        document.getElementById('ticket-duration').textContent = currentTicket.duration;
+
+        ticketResult.classList.add('show');
+        ticketResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        payBtn.disabled = true;
+        modal.classList.remove('show');
+    }
+
+    // ============================================================
+    //  事件绑定
+    // ============================================================
+    calcBtn.addEventListener('click', calculateTicket);
+    payBtn.addEventListener('click', openPaymentModal);
+    closeModal.addEventListener('click', () => modal.classList.remove('show'));
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+
+    document.querySelectorAll('.payment-method').forEach(el => {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    confirmPay.addEventListener('click', processPayment);
+
+    // ============================================================
+    //  日期时间
+    // ============================================================
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('current-date').textContent =
+            now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+        const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+        document.getElementById('current-time').textContent =
+            `${weekdays[now.getDay()]} ${now.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' })}`;
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // 回车触发计算
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.target.tagName === 'SELECT')) calcBtn.click();
+    });
+</script>
+</body>
+</html>
